@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/rs/xid"
 )
 
 type CategoryList struct {
@@ -15,7 +18,18 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-func ListCategoriesHandler(res http.ResponseWriter, req *http.Request) {
+func CategoriesHandler(res http.ResponseWriter, req *http.Request) {
+
+	switch req.Method {
+	case http.MethodGet:
+		CategoryGetHandler(res, req)
+	case http.MethodPost:
+		CategoryPostHandler(res, req)
+	}
+
+}
+
+func CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 	cats := &CategoryList{
 		Categories: []Category{
 			{ID: "a1b2", Name: "foo"},
@@ -28,7 +42,17 @@ func ListCategoriesHandler(res http.ResponseWriter, req *http.Request) {
 		log.Fatal(err)
 	}
 
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("content-type", jsonContentType)
 	res.Write(bytePayload)
+	res.WriteHeader(http.StatusOK)
+}
 
+func CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
+
+	guid := xid.New().String()
+
+	res.Header().Set("content-type", jsonContentType)
+	res.WriteHeader(http.StatusCreated)
+	payload := fmt.Sprintf(`{"id":"%s","name":"accommodation"}`, guid)
+	res.Write([]byte(payload))
 }

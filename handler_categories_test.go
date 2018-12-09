@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -32,8 +33,8 @@ func TestListCategories(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		contentType := result.Header.Get("content-type")
-		desiredContentType := "application/json"
+		contentType := result.Header.Get("Content-Type")
+		desiredContentType := jsonContentType
 		assertStringsEqual(t, contentType, desiredContentType)
 	})
 
@@ -89,5 +90,66 @@ func TestListCategories(t *testing.T) {
 
 		assertStringsEqual(t, bodyString, desiredBodyString)
 
+	})
+}
+
+func TestAddCategory(t *testing.T) {
+
+	server := NewCategoryServer()
+
+	t.Run("check response code", func(t *testing.T) {
+		body := strings.NewReader("foo")
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		status := result.StatusCode
+		desiredStatus := http.StatusCreated
+		assertNumbersEqual(t, status, desiredStatus)
+	})
+
+	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+		body := strings.NewReader("foo")
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		contentType := result.Header.Get("Content-Type")
+		desiredContentType := jsonContentType
+		assertStringsEqual(t, contentType, desiredContentType)
+	})
+
+	t.Run("check response body contains a category with ID & name", func(t *testing.T) {
+		categoryName := "accommodation"
+		body := strings.NewReader(categoryName)
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		bodyBytes, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var category Category
+
+		err = json.Unmarshal(bodyBytes, &category)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if category.Name != categoryName {
+			t.Errorf("got name '%s' wanted '%s'", category.Name, categoryName)
+		}
+
+		if !isXid(t, category.ID) {
+			t.Errorf("got ID '%s' which isn't an xid", category.ID)
+		}
 	})
 }
