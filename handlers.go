@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-const statusString = "OK"
+const statusBodyString = "OK"
 
 func StatusHandler(res http.ResponseWriter, req *http.Request) {
-	io.WriteString(res, statusString)
+	io.WriteString(res, statusBodyString)
 }

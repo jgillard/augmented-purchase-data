@@ -21,19 +21,34 @@ func TestStatusHandler(t *testing.T) {
 
 	result := res.Result()
 
-	status := result.StatusCode
-	desiredStatus := http.StatusOK
-	if status != desiredStatus {
-		t.Errorf("got %d wanted %d", status, desiredStatus)
-	}
+	t.Run("check status response code", func(t *testing.T) {
+		status := result.StatusCode
+		desiredStatus := http.StatusOK
+		assertNumbersEqual(t, status, desiredStatus)
+	})
 
-	body, err := ioutil.ReadAll(result.Body)
-	bodyString := string(body)
-	if err != nil {
-		t.Fatal(err)
+	t.Run("check status response body", func(t *testing.T) {
+		body, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		bodyString := string(body)
+		desiredBody := statusBodyString
+		assertStringsEqual(t, bodyString, desiredBody)
+	})
+
+}
+
+func assertNumbersEqual(t *testing.T, a, b int) {
+	t.Helper()
+	if a != b {
+		t.Errorf("got %d wanted %d", a, b)
 	}
-	desiredBody := statusString
-	if bodyString != desiredBody {
-		t.Errorf("got '%s' wanted '%s'", bodyString, desiredBody)
+}
+
+func assertStringsEqual(t *testing.T, a, b string) {
+	t.Helper()
+	if a != b {
+		t.Errorf("got '%s' wanted '%s'", a, b)
 	}
 }
