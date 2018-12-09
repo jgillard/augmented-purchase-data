@@ -8,7 +8,7 @@ import (
 )
 
 func TestStatusHandler(t *testing.T) {
-	server := NewCategoryServer()
+	server := NewCategoryServer(dummyStore)
 
 	req, err := http.NewRequest(http.MethodGet, "/status", nil)
 	if err != nil {
@@ -37,3 +37,5 @@ func TestStatusHandler(t *testing.T) {
 	})
 
 }
+
+var dummyStore = &StubCategoryStore{}

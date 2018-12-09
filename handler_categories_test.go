@@ -12,7 +12,8 @@ import (
 
 func TestListCategories(t *testing.T) {
 
-	server := NewCategoryServer()
+	store := StubCategoryStore{}
+	server := NewCategoryServer(&store)
 
 	t.Run("check response code", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories")
@@ -95,7 +96,8 @@ func TestListCategories(t *testing.T) {
 
 func TestAddCategory(t *testing.T) {
 
-	server := NewCategoryServer()
+	store := StubCategoryStore{}
+	server := NewCategoryServer(&store)
 
 	t.Run("check response code", func(t *testing.T) {
 		body := strings.NewReader("foo")
@@ -152,4 +154,13 @@ func TestAddCategory(t *testing.T) {
 			t.Errorf("got ID '%s' which isn't an xid", category.ID)
 		}
 	})
+
+}
+
+type StubCategoryStore struct {
+	categories CategoryList
+}
+
+func (s *StubCategoryStore) GetCategoryList() CategoryList {
+	return s.categories
 }

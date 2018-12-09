@@ -9,6 +9,10 @@ import (
 	"github.com/rs/xid"
 )
 
+type CategoryStore interface {
+	GetCategoryList() CategoryList
+}
+
 type CategoryList struct {
 	Categories []Category `json:"categories"`
 }
@@ -18,18 +22,7 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-func CategoriesHandler(res http.ResponseWriter, req *http.Request) {
-
-	switch req.Method {
-	case http.MethodGet:
-		CategoryGetHandler(res, req)
-	case http.MethodPost:
-		CategoryPostHandler(res, req)
-	}
-
-}
-
-func CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
+func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 	cats := &CategoryList{
 		Categories: []Category{
 			{ID: "a1b2", Name: "foo"},
@@ -42,16 +35,14 @@ func CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 		log.Fatal(err)
 	}
 
-	res.Header().Set("content-type", jsonContentType)
 	res.Write(bytePayload)
 	res.WriteHeader(http.StatusOK)
 }
 
-func CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
+func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
 
 	guid := xid.New().String()
 
-	res.Header().Set("content-type", jsonContentType)
 	res.WriteHeader(http.StatusCreated)
 	payload := fmt.Sprintf(`{"id":"%s","name":"accommodation"}`, guid)
 	res.Write([]byte(payload))
