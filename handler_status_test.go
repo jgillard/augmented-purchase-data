@@ -38,17 +38,3 @@ func TestStatusHandler(t *testing.T) {
 	})
 
 }
-
-func assertNumbersEqual(t *testing.T, a, b int) {
-	t.Helper()
-	if a != b {
-		t.Errorf("got %d wanted %d", a, b)
-	}
-}
-
-func assertStringsEqual(t *testing.T, a, b string) {
-	t.Helper()
-	if a != b {
-		t.Errorf("got '%s' wanted '%s'", a, b)
-	}
-}
