@@ -11,13 +11,13 @@ import (
 
 func TestListCategories(t *testing.T) {
 
+	server := NewCategoryServer()
+
 	t.Run("check response code", func(t *testing.T) {
-		req := NewListCategoriesRequest(t)
+		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(ListCategoriesHandler)
-		handler.ServeHTTP(res, req)
-
+		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		status := result.StatusCode
@@ -26,12 +26,10 @@ func TestListCategories(t *testing.T) {
 	})
 
 	t.Run("check content-type header is application/json", func(t *testing.T) {
-		req := NewListCategoriesRequest(t)
+		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(ListCategoriesHandler)
-		handler.ServeHTTP(res, req)
-
+		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		contentType := result.Header.Get("content-type")
@@ -42,12 +40,10 @@ func TestListCategories(t *testing.T) {
 	t.Run("return a list of categories with IDs & names", func(t *testing.T) {
 		// this is kinda testing the marshalling/unmarshalling rather than the json responses themselves
 
-		req := NewListCategoriesRequest(t)
+		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(ListCategoriesHandler)
-		handler.ServeHTTP(res, req)
-
+		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		bodyBytes, err := ioutil.ReadAll(result.Body)
@@ -77,12 +73,10 @@ func TestListCategories(t *testing.T) {
 	t.Run("test the json itself", func(t *testing.T) {
 		// surely don't ned both of these, what's the best practice?
 
-		req := NewListCategoriesRequest(t)
+		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(ListCategoriesHandler)
-		handler.ServeHTTP(res, req)
-
+		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		bodyBytes, err := ioutil.ReadAll(result.Body)

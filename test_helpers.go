@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func NewListCategoriesRequest(t *testing.T) *http.Request {
-	req, err := http.NewRequest(http.MethodGet, "/categories", nil)
+func NewGetRequest(t *testing.T, path string) *http.Request {
+	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,6 +8,8 @@ import (
 )
 
 func TestStatusHandler(t *testing.T) {
+	server := NewCategoryServer()
+
 	req, err := http.NewRequest(http.MethodGet, "/status", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -15,10 +17,7 @@ func TestStatusHandler(t *testing.T) {
 
 	res := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(StatusHandler)
-
-	handler.ServeHTTP(res, req)
-
+	server.ServeHTTP(res, req)
 	result := res.Result()
 
 	t.Run("check status response code", func(t *testing.T) {
