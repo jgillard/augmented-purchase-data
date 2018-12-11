@@ -32,9 +32,9 @@ func TestListCategories(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		status := result.StatusCode
-		desiredStatus := http.StatusOK
-		assertNumbersEqual(t, status, desiredStatus)
+		got := result.StatusCode
+		want := http.StatusOK
+		assertNumbersEqual(t, got, want)
 	})
 
 	t.Run("check content-type header is application/json", func(t *testing.T) {
@@ -44,9 +44,9 @@ func TestListCategories(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		contentType := result.Header.Get("Content-Type")
-		desiredContentType := jsonContentType
-		assertStringsEqual(t, contentType, desiredContentType)
+		got := result.Header.Get("Content-Type")
+		want := jsonContentType
+		assertStringsEqual(t, got, want)
 	})
 
 	t.Run("return the list of categories with IDs & names", func(t *testing.T) {
@@ -63,17 +63,17 @@ func TestListCategories(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		var categories CategoryList
+		var got CategoryList
 
-		err = json.Unmarshal(bodyBytes, &categories)
+		err = json.Unmarshal(bodyBytes, &got)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		desiredBody := categoryList
+		want := categoryList
 
-		if !reflect.DeepEqual(categories, desiredBody) {
-			t.Errorf("got '%v' wanted '%v'", categories, desiredBody)
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got '%v' wanted '%v'", got, want)
 		}
 
 	})
@@ -92,10 +92,10 @@ func TestListCategories(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		bodyString := string(bodyBytes)
-		desiredBodyString := `{"categories":[{"id":"1234","name":"accommodation"},{"id":"5678","name":"food and drink"}]}`
+		got := string(bodyBytes)
+		want := `{"categories":[{"id":"1234","name":"accommodation"},{"id":"5678","name":"food and drink"}]}`
 
-		assertStringsEqual(t, bodyString, desiredBodyString)
+		assertStringsEqual(t, got, want)
 
 	})
 }
@@ -111,19 +111,6 @@ func TestAddCategory(t *testing.T) {
 	}
 	server := NewCategoryServer(store)
 
-	t.Run("check response code", func(t *testing.T) {
-		body := strings.NewReader("foo")
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		status := result.StatusCode
-		desiredStatus := http.StatusCreated
-		assertNumbersEqual(t, status, desiredStatus)
-	})
-
 	t.Run("check Content-Type header is application/json", func(t *testing.T) {
 		body := strings.NewReader("foo")
 		req := NewPostRequest(t, "/categories", body)
@@ -132,9 +119,9 @@ func TestAddCategory(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		contentType := result.Header.Get("Content-Type")
-		desiredContentType := jsonContentType
-		assertStringsEqual(t, contentType, desiredContentType)
+		got := result.Header.Get("Content-Type")
+		want := jsonContentType
+		assertStringsEqual(t, got, want)
 	})
 
 	t.Run("check response body contains a category with ID & correct name", func(t *testing.T) {
@@ -151,54 +138,48 @@ func TestAddCategory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		var category Category
+		var got Category
 
-		err = json.Unmarshal(bodyBytes, &category)
+		err = json.Unmarshal(bodyBytes, &got)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if category.Name != categoryName {
-			t.Errorf("got name '%s' wanted '%s'", category.Name, categoryName)
-		}
+		assertStringsEqual(t, got.Name, categoryName)
 
-		if !isXid(t, category.ID) {
-			t.Errorf("got ID '%s' which isn't an xid", category.ID)
+		if !isXid(t, got.ID) {
+			t.Errorf("got ID '%s' which isn't an xid", got.ID)
 		}
 	})
 
 	t.Run("check can add new name", func(t *testing.T) {
 		categoryName := "food and drink"
 		body := strings.NewReader(categoryName)
-
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
+
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		got := result.StatusCode
 		want := http.StatusCreated
 
-		if got != want {
-			t.Errorf("got status code %d expected %d", got, want)
-		}
+		assertNumbersEqual(t, got, want)
 	})
 
 	t.Run("check cannot add a duplicate name", func(t *testing.T) {
 		categoryName := "accommodation"
 		body := strings.NewReader(categoryName)
-
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
+
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
 		got := result.StatusCode
 		want := http.StatusConflict
 
-		if got != want {
-			t.Errorf("got status code %d expected %d", got, want)
-		}
+		assertNumbersEqual(t, got, want)
 	})
 
 	t.Run("name must not be invalid", func(t *testing.T) {
