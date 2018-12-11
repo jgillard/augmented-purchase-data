@@ -12,12 +12,12 @@ I'm after more granular and configurable categorisation of spending than what Mo
 ## Implementation
 * Categories/Types:
   * Fields: id (string), name (string)
-  * Methods: Add, Rename, Remove, List
+  * Methods: Add, Rename, Remove, List, Get
   * Considerations: no duplicate names, cannot remove a category used by a transaction
 
 * Subcategories/Subtypes:
   * Fields: id (string), name (string), typeId (string)
-  * Methods: Add, Rename, Remove, List
+  * Methods: Add, Rename, Remove, List, Get
   * Considerations: no duplicate names, cannot remove a subcategory used by a transaction
 
 * Additional data:

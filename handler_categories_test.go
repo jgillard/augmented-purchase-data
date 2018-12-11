@@ -100,6 +100,69 @@ func TestListCategories(t *testing.T) {
 	})
 }
 
+func TestGetCategory(t *testing.T) {
+
+	stubCategory := Category{ID: "1234", Name: "accommodation"}
+	store := &StubCategoryStore{
+		CategoryList{
+			Categories: []Category{
+				stubCategory,
+			},
+		},
+	}
+	server := NewCategoryServer(store)
+
+	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+		req := NewGetRequest(t, "/categories/1234")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.Header.Get("Content-Type")
+		want := jsonContentType
+		assertStringsEqual(t, got, want)
+	})
+
+	t.Run("check can get category", func(t *testing.T) {
+		req := NewGetRequest(t, fmt.Sprintf("/categories/%s", stubCategory.ID))
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		body, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var got Category
+
+		err = json.Unmarshal(body, &got)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assertStringsEqual(t, got.ID, stubCategory.ID)
+		assertStringsEqual(t, got.Name, stubCategory.Name)
+	})
+
+	t.Run("check cannot get non-existent category", func(t *testing.T) {
+		nonExistentCategory := "5678"
+		req := NewGetRequest(t, fmt.Sprintf("/categories/%s", nonExistentCategory))
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusNotFound
+
+		assertNumbersEqual(t, got, want)
+	})
+
+}
+
 func TestAddCategory(t *testing.T) {
 
 	store := &StubCategoryStore{
