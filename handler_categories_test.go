@@ -216,6 +216,108 @@ func TestAddCategory(t *testing.T) {
 
 }
 
+func TestRenameCategory(t *testing.T) {
+
+	existingCategory := Category{ID: "1234", Name: "accommodation"}
+	store := &StubCategoryStore{
+		CategoryList{
+			Categories: []Category{
+				existingCategory,
+			},
+		},
+	}
+	server := NewCategoryServer(store)
+
+	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+		body := []byte("foo")
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.Header.Get("Content-Type")
+		want := jsonContentType
+		assertStringsEqual(t, got, want)
+	})
+
+	t.Run("rejects request if body not json category", func(t *testing.T) {
+		body := []byte("foo")
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusBadRequest
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("can rename existing category to valid name", func(t *testing.T) {
+		newName := "newName"
+		renamedCategory := Category{ID: "1234", Name: newName}
+		body, err := json.Marshal(renamedCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		gotStatus := result.StatusCode
+		wantStatus := http.StatusOK
+		assertNumbersEqual(t, gotStatus, wantStatus)
+
+		gotBody, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wantBody := body
+		assertByteSlicesEqual(t, gotBody, wantBody)
+
+		if store.categories.Categories[0].Name != newName {
+			t.Fatalf("store not updated: got '%s' want '%s'", gotBody, wantBody)
+		}
+
+	})
+	t.Run("cannot rename existing category to invalid name", func(t *testing.T) {
+		renamedCategory := Category{ID: "1234", Name: "foo/*!bar"}
+		body, err := json.Marshal(renamedCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusBadRequest
+		assertNumbersEqual(t, got, want)
+	})
+	t.Run("cannot rename non-existent category", func(t *testing.T) {
+		nonExistentCategory := Category{ID: "5678", Name: "foobar"}
+		body, err := json.Marshal(nonExistentCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusNotFound
+		assertNumbersEqual(t, got, want)
+	})
+
+}
+
 type StubCategoryStore struct {
 	categories CategoryList
 }

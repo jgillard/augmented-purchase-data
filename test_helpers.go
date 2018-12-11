@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"testing"
@@ -24,6 +25,15 @@ func NewPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
+func NewPutRequest(t *testing.T, path string, b []byte) *http.Request {
+	body := bytes.NewBuffer(b)
+	req, err := http.NewRequest(http.MethodPut, path, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return req
+}
+
 func assertNumbersEqual(t *testing.T, a, b int) {
 	t.Helper()
 	if a != b {
@@ -35,6 +45,13 @@ func assertStringsEqual(t *testing.T, a, b string) {
 	t.Helper()
 	if a != b {
 		t.Errorf("got '%s' wanted '%s'", a, b)
+	}
+}
+
+func assertByteSlicesEqual(t *testing.T, a, b []byte) {
+	t.Helper()
+	if bytes.Equal(a, b) {
+		t.Errorf("got '%v' wanted '%v'", a, b)
 	}
 }
 
