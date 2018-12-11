@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/rs/xid"
+	"regexp"
 )
 
 type CategoryStore interface {
-	GetCategoryList() CategoryList
+	ListCategories() CategoryList
+	AddCategory(categoryName string) Category
+	CategoryNameExists(categoryName string) bool
 }
 
 type CategoryList struct {
@@ -23,14 +24,9 @@ type Category struct {
 }
 
 func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
-	cats := &CategoryList{
-		Categories: []Category{
-			{ID: "a1b2", Name: "foo"},
-		},
-	}
+	categoryList := c.store.ListCategories()
 
-	bytePayload, err := json.Marshal(cats)
-
+	bytePayload, err := json.Marshal(categoryList)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,10 +36,45 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 }
 
 func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
+	requestBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	guid := xid.New().String()
+	categoryName := string(requestBody)
+
+	if c.store.CategoryNameExists(categoryName) {
+		res.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	if !isValidCategoryName(categoryName) {
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	category := c.store.AddCategory(categoryName)
 
 	res.WriteHeader(http.StatusCreated)
-	payload := fmt.Sprintf(`{"id":"%s","name":"accommodation"}`, guid)
+	payload, err := json.Marshal(category)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	res.Write([]byte(payload))
+}
+
+func isValidCategoryName(name string) bool {
+	isValid := true
+
+	if len(name) == 0 || len(name) > 32 {
+		isValid = false
+	}
+
+	isLetterOrWhitespace := regexp.MustCompile(`^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`).MatchString
+	if !isLetterOrWhitespace(name) {
+		isValid = false
+	}
+
+	return isValid
 }

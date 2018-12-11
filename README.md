@@ -27,4 +27,5 @@ I'm after more granular and configurable categorisation of spending than what Mo
   * Considerations: type can be "string" or "int", option methods only available to "string" type, no duplicate names, cannot remove additional data used by a transaction
 
 ## TBD
-May need counters of all types & subtypes & metadata if the Monzo API is not fast enough to grab all transactions on the fly for aggregation. At this point, should the Monzo API even be used? These counters needn't know about the data structure hierarchy, can just be a list of IDs with counts.
+* May need counters of all types & subtypes & metadata if the Monzo API is not fast enough to grab all transactions on the fly for aggregation. At this point, should the Monzo API even be used? These counters needn't know about the data structure hierarchy, can just be a list of IDs with counts.
+* Support multiple users. Right now I'm ignoring this aspect.

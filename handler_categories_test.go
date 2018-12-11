@@ -2,18 +2,28 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/rs/xid"
 )
 
 func TestListCategories(t *testing.T) {
 
-	store := StubCategoryStore{}
-	server := NewCategoryServer(&store)
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "accommodation"},
+			Category{ID: "5678", Name: "food and drink"},
+		},
+	}
+
+	store := &StubCategoryStore{categoryList}
+	server := NewCategoryServer(store)
 
 	t.Run("check response code", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories")
@@ -39,8 +49,8 @@ func TestListCategories(t *testing.T) {
 		assertStringsEqual(t, contentType, desiredContentType)
 	})
 
-	t.Run("return a list of categories with IDs & names", func(t *testing.T) {
-		// this is kinda testing the marshalling/unmarshalling rather than the json responses themselves
+	t.Run("return the list of categories with IDs & names", func(t *testing.T) {
+		// this is kinda testing the marshalling/unmarshalling rather than the json responses themselves?
 
 		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
@@ -60,11 +70,7 @@ func TestListCategories(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		desiredBody := CategoryList{
-			Categories: []Category{
-				{ID: "a1b2", Name: "foo"},
-			},
-		}
+		desiredBody := categoryList
 
 		if !reflect.DeepEqual(categories, desiredBody) {
 			t.Errorf("got '%v' wanted '%v'", categories, desiredBody)
@@ -87,7 +93,7 @@ func TestListCategories(t *testing.T) {
 		}
 
 		bodyString := string(bodyBytes)
-		desiredBodyString := `{"categories":[{"id":"a1b2","name":"foo"}]}`
+		desiredBodyString := `{"categories":[{"id":"1234","name":"accommodation"},{"id":"5678","name":"food and drink"}]}`
 
 		assertStringsEqual(t, bodyString, desiredBodyString)
 
@@ -96,8 +102,14 @@ func TestListCategories(t *testing.T) {
 
 func TestAddCategory(t *testing.T) {
 
-	store := StubCategoryStore{}
-	server := NewCategoryServer(&store)
+	store := &StubCategoryStore{
+		CategoryList{
+			Categories: []Category{
+				Category{ID: "1234", Name: "accommodation"},
+			},
+		},
+	}
+	server := NewCategoryServer(store)
 
 	t.Run("check response code", func(t *testing.T) {
 		body := strings.NewReader("foo")
@@ -125,8 +137,8 @@ func TestAddCategory(t *testing.T) {
 		assertStringsEqual(t, contentType, desiredContentType)
 	})
 
-	t.Run("check response body contains a category with ID & name", func(t *testing.T) {
-		categoryName := "accommodation"
+	t.Run("check response body contains a category with ID & correct name", func(t *testing.T) {
+		categoryName := "newName"
 		body := strings.NewReader(categoryName)
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -155,12 +167,101 @@ func TestAddCategory(t *testing.T) {
 		}
 	})
 
+	t.Run("check can add new name", func(t *testing.T) {
+		categoryName := "food and drink"
+		body := strings.NewReader(categoryName)
+
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusCreated
+
+		if got != want {
+			t.Errorf("got status code %d expected %d", got, want)
+		}
+	})
+
+	t.Run("check cannot add a duplicate name", func(t *testing.T) {
+		categoryName := "accommodation"
+		body := strings.NewReader(categoryName)
+
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusConflict
+
+		if got != want {
+			t.Errorf("got status code %d expected %d", got, want)
+		}
+	})
+
+	t.Run("name must not be invalid", func(t *testing.T) {
+
+		cases := map[string]string{
+			"empty string":         "",
+			"only whitespace":      "     ",
+			"leading whitespace":   " foobar",
+			"trailing whitespace":  "foobar ",
+			"string over 32 chars": "abcdefhijklmnopqrstuvwxyzabcdefgh",
+			"numeric":              "123",
+			"punctuation chars":    "!@$",
+		}
+
+		for name, value := range cases {
+			t.Run(fmt.Sprintf("name must not be %s", name), func(t *testing.T) {
+				body := strings.NewReader(value)
+
+				req := NewPostRequest(t, "/categories", body)
+				res := httptest.NewRecorder()
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				got := result.StatusCode
+				want := http.StatusUnprocessableEntity
+
+				if got != want {
+					t.Errorf("got status code %d expected %d, when posting categoryName '%s'", got, want, value)
+				}
+			})
+		}
+
+	})
+
 }
 
 type StubCategoryStore struct {
 	categories CategoryList
 }
 
-func (s *StubCategoryStore) GetCategoryList() CategoryList {
+func (s *StubCategoryStore) ListCategories() CategoryList {
 	return s.categories
+}
+
+func (s *StubCategoryStore) AddCategory(categoryName string) Category {
+	newCat := Category{
+		ID:   xid.New().String(),
+		Name: categoryName,
+	}
+
+	s.categories.Categories = append(s.categories.Categories, newCat)
+
+	return newCat
+}
+
+func (s *StubCategoryStore) CategoryNameExists(categoryName string) bool {
+	alreadyExists := false
+
+	for _, c := range s.categories.Categories {
+		if c.Name == categoryName {
+			alreadyExists = true
+		}
+	}
+
+	return alreadyExists
 }
