@@ -459,6 +459,17 @@ func (s *StubCategoryStore) ListCategories() CategoryList {
 	return s.categories
 }
 
+func (s *StubCategoryStore) GetCategory(id string) Category {
+	var category Category
+
+	for _, c := range s.categories.Categories {
+		if c.ID == id {
+			category = c
+		}
+	}
+	return category
+}
+
 func (s *StubCategoryStore) AddCategory(categoryName string) Category {
 	newCat := Category{
 		ID:   xid.New().String(),

@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type CategoryStore interface {
 	ListCategories() CategoryList
+	GetCategory(categoryID string) Category
 	AddCategory(categoryName string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
@@ -27,15 +29,32 @@ type Category struct {
 }
 
 func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
-	categoryList := c.store.ListCategories()
+	var payload []byte
+	var err error
 
-	payload, err := json.Marshal(categoryList)
-	if err != nil {
-		log.Fatal(err)
+	if strings.HasPrefix(req.URL.Path, "/categories/") && len(req.URL.Path) > len("/categories/") {
+		categoryID := req.URL.Path[len("/categories/"):]
+		category := c.store.GetCategory(categoryID)
+		if category == (Category{}) {
+			res.WriteHeader(http.StatusNotFound)
+			res.Write([]byte("{}"))
+			return
+		}
+
+		payload, err = json.Marshal(category)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		categoryList := c.store.ListCategories()
+		payload, err = json.Marshal(categoryList)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	res.Write(payload)
-	res.WriteHeader(http.StatusOK)
+
 }
 
 func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.Request) {

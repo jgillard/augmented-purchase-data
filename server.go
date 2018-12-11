@@ -19,6 +19,7 @@ func NewCategoryServer(store CategoryStore) *CategoryServer {
 	router := http.NewServeMux()
 	router.Handle("/status", http.HandlerFunc(p.statusHandler))
 	router.Handle("/categories", http.HandlerFunc(p.categoriesHandler))
+	router.Handle("/categories/", http.HandlerFunc(p.categoriesHandler))
 
 	p.Handler = router
 
