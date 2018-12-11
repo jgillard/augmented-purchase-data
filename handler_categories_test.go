@@ -276,7 +276,7 @@ func TestRenameCategory(t *testing.T) {
 			t.Fatal(err)
 		}
 		wantBody := body
-		assertByteSlicesEqual(t, gotBody, wantBody)
+		assertStringsEqual(t, string(gotBody), string(wantBody))
 
 		if store.categories.Categories[0].Name != newName {
 			t.Fatalf("store not updated: got '%s' want '%s'", gotBody, wantBody)
@@ -296,7 +296,7 @@ func TestRenameCategory(t *testing.T) {
 		result := res.Result()
 
 		got := result.StatusCode
-		want := http.StatusBadRequest
+		want := http.StatusUnprocessableEntity
 		assertNumbersEqual(t, got, want)
 	})
 	t.Run("cannot rename non-existent category", func(t *testing.T) {
@@ -335,6 +335,32 @@ func (s *StubCategoryStore) AddCategory(categoryName string) Category {
 	s.categories.Categories = append(s.categories.Categories, newCat)
 
 	return newCat
+}
+
+func (s *StubCategoryStore) RenameCategory(id, name string) Category {
+	index := 0
+
+	for i, c := range s.categories.Categories {
+		if c.ID == id {
+			index = i
+			s.categories.Categories[index].Name = name
+			break
+		}
+	}
+
+	return s.categories.Categories[index]
+}
+
+func (s *StubCategoryStore) CategoryIdExists(categoryID string) bool {
+	alreadyExists := false
+
+	for _, c := range s.categories.Categories {
+		if c.ID == categoryID {
+			alreadyExists = true
+		}
+	}
+
+	return alreadyExists
 }
 
 func (s *StubCategoryStore) CategoryNameExists(categoryName string) bool {

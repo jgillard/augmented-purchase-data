@@ -48,13 +48,6 @@ func assertStringsEqual(t *testing.T, a, b string) {
 	}
 }
 
-func assertByteSlicesEqual(t *testing.T, a, b []byte) {
-	t.Helper()
-	if bytes.Equal(a, b) {
-		t.Errorf("got '%v' wanted '%v'", a, b)
-	}
-}
-
 func isXid(t *testing.T, str string) bool {
 	t.Helper()
 	_, err := xid.FromString(str)

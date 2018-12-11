@@ -11,6 +11,8 @@ import (
 type CategoryStore interface {
 	ListCategories() CategoryList
 	AddCategory(categoryName string) Category
+	RenameCategory(categoryID, categoryName string) Category
+	CategoryIdExists(categoryID string) bool
 	CategoryNameExists(categoryName string) bool
 }
 
@@ -26,12 +28,12 @@ type Category struct {
 func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 	categoryList := c.store.ListCategories()
 
-	bytePayload, err := json.Marshal(categoryList)
+	payload, err := json.Marshal(categoryList)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	res.Write(bytePayload)
+	res.Write(payload)
 	res.WriteHeader(http.StatusOK)
 }
 
@@ -61,7 +63,50 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 		log.Fatal(err)
 	}
 
-	res.Write([]byte(payload))
+	res.Write(payload)
+}
+
+func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.Request) {
+	requestBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var got Category
+
+	err = json.Unmarshal(requestBody, &got)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	categoryID := got.ID
+	categoryName := got.Name
+
+	if !c.store.CategoryIdExists(categoryID) {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if c.store.CategoryNameExists(categoryName) {
+		res.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	if !isValidCategoryName(categoryName) {
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	category := c.store.RenameCategory(got.ID, categoryName)
+
+	res.WriteHeader(http.StatusOK)
+	payload, err := json.Marshal(category)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res.Write(payload)
 }
 
 func isValidCategoryName(name string) bool {
