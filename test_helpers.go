@@ -34,6 +34,15 @@ func NewPutRequest(t *testing.T, path string, b []byte) *http.Request {
 	return req
 }
 
+func NewDeleteRequest(t *testing.T, path string, b []byte) *http.Request {
+	body := bytes.NewBuffer(b)
+	req, err := http.NewRequest(http.MethodDelete, path, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return req
+}
+
 func assertNumbersEqual(t *testing.T, a, b int) {
 	t.Helper()
 	if a != b {

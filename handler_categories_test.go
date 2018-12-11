@@ -318,6 +318,39 @@ func TestRenameCategory(t *testing.T) {
 
 }
 
+func TestRemoveCategory(t *testing.T) {
+
+	existingCategory := Category{ID: "1234", Name: "accommodation"}
+	store := &StubCategoryStore{
+		CategoryList{
+			Categories: []Category{
+				existingCategory,
+			},
+		},
+	}
+	server := NewCategoryServer(store)
+
+	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+		body := []byte("foo")
+		req := NewDeleteRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.Header.Get("Content-Type")
+		want := jsonContentType
+		assertStringsEqual(t, got, want)
+	})
+
+	t.Run("rejects request if body not json with id field", func(t *testing.T) {})
+
+	t.Run("can remove existing category", func(t *testing.T) {})
+
+	t.Run("cannot remove non-existent category", func(t *testing.T) {})
+
+}
+
 type StubCategoryStore struct {
 	categories CategoryList
 }
