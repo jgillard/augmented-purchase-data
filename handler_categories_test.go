@@ -21,43 +21,28 @@ func TestListCategories(t *testing.T) {
 			Category{ID: "5678", Name: "food and drink"},
 		},
 	}
-
 	store := &StubCategoryStore{categoryList}
 	server := NewCategoryServer(store)
 
-	t.Run("check response code", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories")
-		res := httptest.NewRecorder()
+	req := NewGetRequest(t, "/categories")
+	res := httptest.NewRecorder()
 
-		server.ServeHTTP(res, req)
-		result := res.Result()
+	server.ServeHTTP(res, req)
+	result := res.Result()
 
+	t.Run("success status code", func(t *testing.T) {
 		got := result.StatusCode
 		want := http.StatusOK
 		assertNumbersEqual(t, got, want)
 	})
 
-	t.Run("check content-type header is application/json", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.Header.Get("Content-Type")
+	t.Run("content-type header", func(t *testing.T) {
+		got := result.Header.Get("content-type")
 		want := jsonContentType
 		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("return the list of categories with IDs & names", func(t *testing.T) {
-		// this is kinda testing the marshalling/unmarshalling rather than the json responses themselves?
-
-		req := NewGetRequest(t, "/categories")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
+	t.Run("response format", func(t *testing.T) {
 		bodyBytes, err := ioutil.ReadAll(result.Body)
 		if err != nil {
 			t.Fatal(err)
@@ -75,28 +60,6 @@ func TestListCategories(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got '%v' wanted '%v'", got, want)
 		}
-
-	})
-
-	t.Run("test the json itself", func(t *testing.T) {
-		// surely don't ned both of these, what's the best practice?
-
-		req := NewGetRequest(t, "/categories")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		bodyBytes, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(bodyBytes)
-		want := `{"categories":[{"id":"1234","name":"accommodation"},{"id":"5678","name":"food and drink"}]}`
-
-		assertStringsEqual(t, got, want)
-
 	})
 }
 
@@ -112,20 +75,44 @@ func TestGetCategory(t *testing.T) {
 	}
 	server := NewCategoryServer(store)
 
-	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+	t.Run("content-type header", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.Header.Get("Content-Type")
+		got := result.Header.Get("content-type")
 		want := jsonContentType
 		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("check can get category", func(t *testing.T) {
-		req := NewGetRequest(t, fmt.Sprintf("/categories/%s", stubCategory.ID))
+	t.Run("success status code", func(t *testing.T) {
+		req := NewGetRequest(t, "/categories/1234")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusOK
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("not-found status code", func(t *testing.T) {
+		req := NewGetRequest(t, "/categories/5678")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusNotFound
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("success response format", func(t *testing.T) {
+		req := NewGetRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -147,9 +134,8 @@ func TestGetCategory(t *testing.T) {
 		assertStringsEqual(t, got.Name, stubCategory.Name)
 	})
 
-	t.Run("check cannot get non-existent category", func(t *testing.T) {
-		nonExistentCategory := "5678"
-		req := NewGetRequest(t, fmt.Sprintf("/categories/%s", nonExistentCategory))
+	t.Run("not-found response format", func(t *testing.T) {
+		req := NewGetRequest(t, "/categories/5678")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -164,7 +150,6 @@ func TestGetCategory(t *testing.T) {
 		want := "{}"
 		assertStringsEqual(t, got, want)
 	})
-
 }
 
 func TestAddCategory(t *testing.T) {
@@ -172,13 +157,13 @@ func TestAddCategory(t *testing.T) {
 	store := &StubCategoryStore{
 		CategoryList{
 			Categories: []Category{
-				Category{ID: "1234", Name: "accommodation"},
+				Category{ID: "1234", Name: "existing category name"},
 			},
 		},
 	}
 	server := NewCategoryServer(store)
 
-	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+	t.Run("content-type header", func(t *testing.T) {
 		body := strings.NewReader("foo")
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -186,13 +171,65 @@ func TestAddCategory(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.Header.Get("Content-Type")
+		got := result.Header.Get("content-type")
 		want := jsonContentType
 		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("check response body contains a category with ID & correct name", func(t *testing.T) {
-		categoryName := "newName"
+	t.Run("success status code", func(t *testing.T) {
+		categoryName := "new category name"
+		body := strings.NewReader(categoryName)
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusCreated
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("duplicate failure status code", func(t *testing.T) {
+		categoryName := "existing category name"
+		body := strings.NewReader(categoryName)
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusConflict
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("invalid name failure status code", func(t *testing.T) {
+		categoryName := "abc123!@£"
+		body := strings.NewReader(categoryName)
+		req := NewPostRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusUnprocessableEntity
+		assertNumbersEqual(t, got, want)
+
+		responseBody, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotBody := string(responseBody)
+		wantBody := "{}"
+		assertStringsEqual(t, gotBody, wantBody)
+
+	})
+
+	t.Run("success response format", func(t *testing.T) {
+		categoryName := "new category name"
 		body := strings.NewReader(categoryName)
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -212,85 +249,28 @@ func TestAddCategory(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
-
-		if !isXid(t, got.ID) {
-			t.Errorf("got ID '%s' which isn't an xid", got.ID)
-		}
 	})
 
-	t.Run("check can add new name", func(t *testing.T) {
-		categoryName := "food and drink"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
+	t.Run("failure response format", func(t *testing.T) {
+		categoryName := "existing category name"
+		requestBody := strings.NewReader(categoryName)
+		req := NewPostRequest(t, "/categories", requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusCreated
-
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("check cannot add a duplicate name", func(t *testing.T) {
-		categoryName := "accommodation"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusConflict
-
-		assertNumbersEqual(t, got, want)
 
 		responseBody, err := ioutil.ReadAll(result.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		gotBody := string(responseBody)
-		wantBody := "{}"
-		assertStringsEqual(t, gotBody, wantBody)
-
+		got := string(responseBody)
+		want := "{}"
+		assertStringsEqual(t, got, want)
 	})
-
-	t.Run("name must not be invalid", func(t *testing.T) {
-
-		cases := map[string]string{
-			"empty string":         "",
-			"only whitespace":      "     ",
-			"leading whitespace":   " foobar",
-			"trailing whitespace":  "foobar ",
-			"string over 32 chars": "abcdefhijklmnopqrstuvwxyzabcdefgh",
-			"numeric":              "123",
-			"punctuation chars":    "!@$",
-		}
-
-		for name, value := range cases {
-			t.Run(fmt.Sprintf("name must not be %s", name), func(t *testing.T) {
-				body := strings.NewReader(value)
-
-				req := NewPostRequest(t, "/categories", body)
-				res := httptest.NewRecorder()
-				server.ServeHTTP(res, req)
-				result := res.Result()
-
-				got := result.StatusCode
-				want := http.StatusUnprocessableEntity
-
-				if got != want {
-					t.Errorf("got status code %d expected %d, when posting categoryName '%s'", got, want, value)
-				}
-			})
-		}
-
-	})
-
 }
 
 func TestRenameCategory(t *testing.T) {
@@ -305,7 +285,7 @@ func TestRenameCategory(t *testing.T) {
 	}
 	server := NewCategoryServer(store)
 
-	t.Run("check Content-Type header is application/json", func(t *testing.T) {
+	t.Run("content-type header", func(t *testing.T) {
 		body := []byte("foo")
 		req := NewPutRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -313,12 +293,29 @@ func TestRenameCategory(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.Header.Get("Content-Type")
+		got := result.Header.Get("content-type")
 		want := jsonContentType
 		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("rejects request if body not json category", func(t *testing.T) {
+	t.Run("success status code", func(t *testing.T) {
+		renamedCategory := Category{ID: "1234", Name: "new category name"}
+		body, err := json.Marshal(renamedCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := NewPutRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusOK
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("invalid body failure status code", func(t *testing.T) {
 		body := []byte("foo")
 		req := NewPutRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -331,35 +328,44 @@ func TestRenameCategory(t *testing.T) {
 		assertNumbersEqual(t, got, want)
 	})
 
-	t.Run("can rename existing category to valid name", func(t *testing.T) {
-		newName := "newName"
-		renamedCategory := Category{ID: "1234", Name: newName}
-		body, err := json.Marshal(renamedCategory)
+	t.Run("success response format", func(t *testing.T) {
+		renamedCategory := Category{ID: "1234", Name: "new category name"}
+		requestBody, err := json.Marshal(renamedCategory)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := NewPutRequest(t, "/categories", body)
+		req := NewPutRequest(t, "/categories", requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		gotStatus := result.StatusCode
-		wantStatus := http.StatusOK
-		assertNumbersEqual(t, gotStatus, wantStatus)
-
-		gotBody, err := ioutil.ReadAll(result.Body)
+		body, err := ioutil.ReadAll(result.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
-		wantBody := body
-		assertStringsEqual(t, string(gotBody), string(wantBody))
 
-		if store.categories.Categories[0].Name != newName {
-			t.Fatalf("store not updated: got '%s' want '%s'", gotBody, wantBody)
-		}
-
+		got := string(body)
+		want := string(requestBody)
+		assertStringsEqual(t, got, want)
 	})
+
+	t.Run("success store updated", func(t *testing.T) {
+		renamedCategory := Category{ID: "1234", Name: "new category name"}
+		requestBody, err := json.Marshal(renamedCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := NewPutRequest(t, "/categories", requestBody)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+
+		got := store.categories.Categories[0].Name
+		want := renamedCategory.Name
+		assertStringsEqual(t, got, want)
+	})
+
 	t.Run("cannot rename existing category to invalid name", func(t *testing.T) {
 		renamedCategory := Category{ID: "1234", Name: "foo/*!bar"}
 		body, err := json.Marshal(renamedCategory)
@@ -463,6 +469,29 @@ func TestRemoveCategory(t *testing.T) {
 		assertNumbersEqual(t, got, want)
 	})
 
+}
+
+func TestIsValidCategoryName(t *testing.T) {
+	cases := map[string]string{
+		"empty string":         "",
+		"only whitespace":      "     ",
+		"leading whitespace":   " foobar",
+		"trailing whitespace":  "foobar ",
+		"string over 32 chars": "abcdefhijklmnopqrstuvwxyzabcdefgh",
+		"numeric":              "123",
+		"punctuation chars":    "!@$",
+	}
+
+	for name, value := range cases {
+		t.Run(fmt.Sprintf("name must not be %s", name), func(t *testing.T) {
+			got := IsValidCategoryName(value)
+			want := false
+
+			if got != want {
+				t.Errorf("'%s' should bve treated as an invalud category name", value)
+			}
+		})
+	}
 }
 
 type StubCategoryStore struct {

@@ -71,7 +71,7 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	if !isValidCategoryName(categoryName) {
+	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		res.Write([]byte("{}"))
 		return
@@ -115,7 +115,7 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	if !isValidCategoryName(categoryName) {
+	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
@@ -169,7 +169,7 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 	res.Write([]byte("{}"))
 }
 
-func isValidCategoryName(name string) bool {
+func IsValidCategoryName(name string) bool {
 	isValid := true
 
 	if len(name) == 0 || len(name) > 32 {

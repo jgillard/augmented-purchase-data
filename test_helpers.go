@@ -56,12 +56,10 @@ func assertStringsEqual(t *testing.T, a, b string) {
 	}
 }
 
-func isXid(t *testing.T, str string) bool {
+func assertIsXid(t *testing.T, s string) {
 	t.Helper()
-	_, err := xid.FromString(str)
+	_, err := xid.FromString(s)
 	if err != nil {
-		return false
-	} else {
-		return true
+		t.Fatalf("got ID '%s' which isn't an xid", s)
 	}
 }
