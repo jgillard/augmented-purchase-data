@@ -155,10 +155,14 @@ func TestGetCategory(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.StatusCode
-		want := http.StatusNotFound
+		body, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		assertNumbersEqual(t, got, want)
+		got := string(body)
+		want := "{}"
+		assertStringsEqual(t, got, want)
 	})
 
 }
@@ -243,6 +247,16 @@ func TestAddCategory(t *testing.T) {
 		want := http.StatusConflict
 
 		assertNumbersEqual(t, got, want)
+
+		responseBody, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotBody := string(responseBody)
+		wantBody := "{}"
+		assertStringsEqual(t, gotBody, wantBody)
+
 	})
 
 	t.Run("name must not be invalid", func(t *testing.T) {

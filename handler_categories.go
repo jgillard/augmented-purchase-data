@@ -67,11 +67,13 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 
 	if c.store.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !isValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
