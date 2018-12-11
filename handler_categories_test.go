@@ -331,7 +331,7 @@ func TestRemoveCategory(t *testing.T) {
 	server := NewCategoryServer(store)
 
 	t.Run("check Content-Type header is application/json", func(t *testing.T) {
-		body := []byte("foo")
+		body := strings.NewReader("{}")
 		req := NewDeleteRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
 
@@ -343,11 +343,48 @@ func TestRemoveCategory(t *testing.T) {
 		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("rejects request if body not json with id field", func(t *testing.T) {})
+	t.Run("rejects request if body not json with id field", func(t *testing.T) {
+		body := strings.NewReader(`{"foo":"bar"}`)
+		req := NewDeleteRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
 
-	t.Run("can remove existing category", func(t *testing.T) {})
+		server.ServeHTTP(res, req)
+		result := res.Result()
 
-	t.Run("cannot remove non-existent category", func(t *testing.T) {})
+		got := result.StatusCode
+		want := http.StatusBadRequest
+		assertNumbersEqual(t, got, want)
+	})
+
+	t.Run("can remove existing category", func(t *testing.T) {
+		body := strings.NewReader(`{"id":"1234"}`)
+		req := NewDeleteRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusOK
+		assertNumbersEqual(t, got, want)
+
+		if server.store.CategoryIdExists("1234") {
+			t.Fatal("category not successfully deleted")
+		}
+	})
+
+	t.Run("cannot remove non-existent category", func(t *testing.T) {
+		body := strings.NewReader(`{"id":"5678"}`)
+		req := NewDeleteRequest(t, "/categories", body)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		got := result.StatusCode
+		want := http.StatusNotFound
+		assertNumbersEqual(t, got, want)
+	})
 
 }
 
@@ -382,6 +419,19 @@ func (s *StubCategoryStore) RenameCategory(id, name string) Category {
 	}
 
 	return s.categories.Categories[index]
+}
+
+func (s *StubCategoryStore) DeleteCategory(id string) {
+	index := 0
+
+	for i, c := range s.categories.Categories {
+		if c.ID == id {
+			index = i
+			break
+		}
+	}
+
+	s.categories.Categories = append(s.categories.Categories[:index], s.categories.Categories[index+1:]...)
 }
 
 func (s *StubCategoryStore) CategoryIdExists(categoryID string) bool {

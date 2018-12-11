@@ -36,6 +36,8 @@ func (c *CategoryServer) categoriesHandler(res http.ResponseWriter, req *http.Re
 		c.CategoryPostHandler(res, req)
 	case http.MethodPut:
 		c.CategoryPutHandler(res, req)
+	case http.MethodDelete:
+		c.CategoryDeleteHandler(res, req)
 	default:
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	}

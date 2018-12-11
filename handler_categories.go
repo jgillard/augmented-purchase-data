@@ -12,6 +12,7 @@ type CategoryStore interface {
 	ListCategories() CategoryList
 	AddCategory(categoryName string) Category
 	RenameCategory(categoryID, categoryName string) Category
+	DeleteCategory(categoryID string)
 	CategoryIdExists(categoryID string) bool
 	CategoryNameExists(categoryName string) bool
 }
@@ -107,6 +108,44 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 	}
 
 	res.Write(payload)
+}
+
+func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request) {
+	type expectedFormat struct {
+		ID string `json:"id"`
+	}
+
+	requestBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var got expectedFormat
+
+	err = json.Unmarshal(requestBody, &got)
+	// json.unmarshall will not error if fields don't match
+	// however got will be an empty struct, check that below
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if got == (expectedFormat{}) {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	categoryID := got.ID
+
+	if !c.store.CategoryIdExists(categoryID) {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	c.store.DeleteCategory(got.ID)
+
+	res.WriteHeader(http.StatusOK)
+	res.Write([]byte("{}"))
 }
 
 func isValidCategoryName(name string) bool {
