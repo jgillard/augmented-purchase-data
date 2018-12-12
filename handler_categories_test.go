@@ -97,13 +97,14 @@ func TestAddCategory(t *testing.T) {
 			value string
 			want  int
 		}{
-			{name: "duplicate name", value: "existing category name", want: http.StatusConflict},
-			{name: "invalid name", value: "abc123!@£", want: http.StatusUnprocessableEntity},
+			{name: "invalid json", value: `{"foo":""}`, want: http.StatusBadRequest},
+			{name: "duplicate name", value: `{"name":"existing category name"}`, want: http.StatusConflict},
+			{name: "invalid name", value: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
 		}
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				body := strings.NewReader(fmt.Sprintf(`{"name":"%s"}`, c.value))
+				body := strings.NewReader(c.value)
 				req := NewPostRequest(t, "/categories", body)
 				res := httptest.NewRecorder()
 
@@ -168,7 +169,7 @@ func TestRenameCategory(t *testing.T) {
 			body     string
 			want     int
 		}{
-			{testName: "invalid json", ID: "1234", body: "foo", want: http.StatusBadRequest},
+			{testName: "invalid json", ID: "1234", body: `{"foo":""}`, want: http.StatusBadRequest},
 			{testName: "invalid name", ID: "1234", body: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
 			{testName: "duplicate name", ID: "1234", body: `{"name":"accommodation"}`, want: http.StatusConflict},
 			{testName: "ID not found", ID: "5678", body: `{"name":"irrelevant"}`, want: http.StatusNotFound},
@@ -197,8 +198,8 @@ func TestRenameCategory(t *testing.T) {
 	})
 
 	t.Run("test success responses & effect", func(t *testing.T) {
-		renamedCategory := putRequestFormat{Name: "new category name"}
-		requestBody, err := json.Marshal(renamedCategory)
+		newCatName := JsonName{Name: "new category name"}
+		requestBody, err := json.Marshal(newCatName)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -213,7 +214,13 @@ func TestRenameCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		responseBody := readBodyBytes(t, result.Body)
-		assertBodyString(t, string(responseBody), string(requestBody))
+
+		renamedCategory := Category{ID: "1234", Name: "new category name"}
+		renamedCategoryBytes, err := json.Marshal(renamedCategory)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertBodyString(t, string(responseBody), string(renamedCategoryBytes))
 
 		// check the store is updated
 		got := store.categories.Categories[0].Name
@@ -239,7 +246,6 @@ func TestRemoveCategory(t *testing.T) {
 			ID   string
 			want int
 		}{
-			{name: "invalid category json", ID: "foo", want: http.StatusBadRequest},
 			{name: "category not found", ID: "5678", want: http.StatusNotFound},
 		}
 

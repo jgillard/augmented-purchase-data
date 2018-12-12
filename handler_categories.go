@@ -29,7 +29,11 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-type putRequestFormat struct {
+type JsonID struct {
+	ID string `json:"id"`
+}
+
+type JsonName struct {
 	Name string `json:"name"`
 }
 
@@ -67,7 +71,22 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 		log.Fatal(err)
 	}
 
-	categoryName := string(requestBody)
+	var got JsonName
+
+	err = json.Unmarshal(requestBody, &got)
+	// json.unmarshall will not error if fields don't match
+	// however got will be an empty struct, check that below
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if got == (JsonName{}) {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	categoryName := got.Name
 
 	if c.store.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
@@ -91,21 +110,29 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 	res.Write(payload)
 }
 
-func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.Request) {
+func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http.Request) {
+	categoryID := req.URL.Path[len("/categories/"):]
+
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var got Category
+	var got JsonName
 
 	err = json.Unmarshal(requestBody, &got)
+	// json.unmarshall will not error if fields don't match
+	// however got will be an empty struct, check that below
 	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if got == (JsonName{}) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	categoryID := got.ID
 	categoryName := got.Name
 
 	if !c.store.CategoryIDExists(categoryID) {
@@ -123,7 +150,7 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	category := c.store.RenameCategory(got.ID, categoryName)
+	category := c.store.RenameCategory(categoryID, categoryName)
 
 	res.WriteHeader(http.StatusOK)
 	payload, err := json.Marshal(category)
@@ -135,38 +162,14 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 }
 
 func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request) {
-	type expectedFormat struct {
-		ID string `json:"id"`
-	}
-
-	requestBody, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var got expectedFormat
-
-	err = json.Unmarshal(requestBody, &got)
-	// json.unmarshall will not error if fields don't match
-	// however got will be an empty struct, check that below
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	if got == (expectedFormat{}) {
-		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	categoryID := got.ID
+	categoryID := req.URL.Path[len("/categories/"):]
 
 	if !c.store.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	c.store.DeleteCategory(got.ID)
+	c.store.DeleteCategory(categoryID)
 
 	res.WriteHeader(http.StatusNoContent)
 }
