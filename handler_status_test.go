@@ -1,41 +1,22 @@
 package handlers
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestStatusHandler(t *testing.T) {
-	server := NewCategoryServer(dummyStore)
-
-	req, err := http.NewRequest(http.MethodGet, "/status", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	server := NewCategoryServer(&StubCategoryStore{})
+	req := NewGetRequest(t, "/status")
 	res := httptest.NewRecorder()
 
 	server.ServeHTTP(res, req)
 	result := res.Result()
 
-	t.Run("check status response code", func(t *testing.T) {
-		status := result.StatusCode
-		desiredStatus := http.StatusOK
-		assertStatusCode(t, status, desiredStatus)
-	})
+	assertStatusCode(t, result.StatusCode, http.StatusOK)
 
-	t.Run("check status response body", func(t *testing.T) {
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		bodyString := string(body)
-		desiredBody := statusBodyString
-		assertBodyString(t, bodyString, desiredBody)
-	})
+	body := readBodyBytes(t, result.Body)
+	assertBodyString(t, string(body), statusBodyString)
 
 }
-
-var dummyStore = &StubCategoryStore{}
