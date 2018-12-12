@@ -27,16 +27,16 @@ func NewPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
-func NewPutRequest(t *testing.T, path string, body io.Reader) *http.Request {
-	req, err := http.NewRequest(http.MethodPut, path, body)
+func NewPatchRequest(t *testing.T, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(http.MethodPatch, path, body)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return req
 }
 
-func NewDeleteRequest(t *testing.T, path string, body io.Reader) *http.Request {
-	req, err := http.NewRequest(http.MethodDelete, path, body)
+func NewDeleteRequest(t *testing.T, path string) *http.Request {
+	req, err := http.NewRequest(http.MethodDelete, path, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -29,6 +29,10 @@ type Category struct {
 	Name string `json:"name"`
 }
 
+type putRequestFormat struct {
+	Name string `json:"name"`
+}
+
 func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 	var payload []byte
 	var err error

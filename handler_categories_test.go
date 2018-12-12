@@ -103,7 +103,7 @@ func TestAddCategory(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				body := strings.NewReader(c.value)
+				body := strings.NewReader(fmt.Sprintf(`{"name":"%s"}`, c.value))
 				req := NewPostRequest(t, "/categories", body)
 				res := httptest.NewRecorder()
 
@@ -125,7 +125,7 @@ func TestAddCategory(t *testing.T) {
 
 	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
-		body := strings.NewReader(categoryName)
+		body := strings.NewReader(fmt.Sprintf(`{"name":"%s"}`, categoryName))
 		req := NewPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
 
@@ -163,20 +163,21 @@ func TestRenameCategory(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := []struct {
-			name  string
-			value string
-			want  int
+			testName string
+			ID       string
+			body     string
+			want     int
 		}{
-			{name: "invalid json", value: "foo", want: http.StatusBadRequest},
-			{name: "invalid name", value: categoryToString(t, Category{ID: "1234", Name: "foo/*!bar"}), want: http.StatusUnprocessableEntity},
-			{name: "duplicate name", value: categoryToString(t, Category{ID: "1234", Name: "accommodation"}), want: http.StatusConflict},
-			{name: "ID not found", value: categoryToString(t, Category{ID: "5678", Name: "irrelevant"}), want: http.StatusNotFound},
+			{testName: "invalid json", ID: "1234", body: "foo", want: http.StatusBadRequest},
+			{testName: "invalid name", ID: "1234", body: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
+			{testName: "duplicate name", ID: "1234", body: `{"name":"accommodation"}`, want: http.StatusConflict},
+			{testName: "ID not found", ID: "5678", body: `{"name":"irrelevant"}`, want: http.StatusNotFound},
 		}
 
 		for _, c := range cases {
-			t.Run(c.name, func(t *testing.T) {
-				body := strings.NewReader(c.value)
-				req := NewPutRequest(t, "/categories", body)
+			t.Run(c.testName, func(t *testing.T) {
+				body := strings.NewReader(c.body)
+				req := NewPatchRequest(t, fmt.Sprintf("/categories/%s", c.ID), body)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
@@ -196,12 +197,12 @@ func TestRenameCategory(t *testing.T) {
 	})
 
 	t.Run("test success responses & effect", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "new category name"}
+		renamedCategory := putRequestFormat{Name: "new category name"}
 		requestBody, err := json.Marshal(renamedCategory)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := NewPutRequest(t, "/categories", bytes.NewReader(requestBody))
+		req := NewPatchRequest(t, "/categories/1234", bytes.NewReader(requestBody))
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -234,18 +235,17 @@ func TestRemoveCategory(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := []struct {
-			name  string
-			value string
-			want  int
+			name string
+			ID   string
+			want int
 		}{
-			{name: "invalid category json", value: `{"foo":"bar"}`, want: http.StatusBadRequest},
-			{name: "category not found", value: `{"id":"5678"}`, want: http.StatusNotFound},
+			{name: "invalid category json", ID: "foo", want: http.StatusBadRequest},
+			{name: "category not found", ID: "5678", want: http.StatusNotFound},
 		}
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				body := strings.NewReader(c.value)
-				req := NewDeleteRequest(t, "/categories", body)
+				req := NewDeleteRequest(t, fmt.Sprintf("/categories/%s", c.ID))
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
@@ -265,8 +265,7 @@ func TestRemoveCategory(t *testing.T) {
 	})
 
 	t.Run("test success response & effect", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"1234"}`)
-		req := NewDeleteRequest(t, "/categories", body)
+		req := NewDeleteRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
