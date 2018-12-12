@@ -79,7 +79,7 @@ func assertIsXid(t *testing.T, s string) {
 func assertBodyEmpty(t *testing.T, b io.ReadCloser) {
 	t.Helper()
 	got := readBodyBytes(t, b)
-	if got != nil {
+	if len(got) != 0 {
 		t.Errorf("wanted an empty response body, got '%s'", got)
 	}
 }

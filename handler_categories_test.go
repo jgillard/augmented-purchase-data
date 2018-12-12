@@ -169,7 +169,8 @@ func TestRenameCategory(t *testing.T) {
 		}{
 			{name: "invalid json", value: "foo", want: http.StatusBadRequest},
 			{name: "invalid name", value: categoryToString(t, Category{ID: "1234", Name: "foo/*!bar"}), want: http.StatusUnprocessableEntity},
-			{name: "name not found", value: categoryToString(t, Category{ID: "5678", Name: "irrelevant"}), want: http.StatusNotFound},
+			{name: "duplicate name", value: categoryToString(t, Category{ID: "1234", Name: "accommodation"}), want: http.StatusConflict},
+			{name: "ID not found", value: categoryToString(t, Category{ID: "5678", Name: "irrelevant"}), want: http.StatusNotFound},
 		}
 
 		for _, c := range cases {

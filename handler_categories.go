@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -37,7 +38,6 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 		category := c.store.GetCategory(categoryID)
 		if category == (Category{}) {
 			res.WriteHeader(http.StatusNotFound)
-			res.Write([]byte("{}"))
 			return
 		}
 
@@ -67,24 +67,23 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 
 	if c.store.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
 		return
 	}
 
 	category := c.store.AddCategory(categoryName)
 
-	res.WriteHeader(http.StatusCreated)
 	payload, err := json.Marshal(category)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	res.Header().Set("Location", fmt.Sprintf("/categories/%s", category.ID))
+	res.WriteHeader(http.StatusCreated)
 	res.Write(payload)
 }
 
@@ -99,7 +98,6 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 	err = json.Unmarshal(requestBody, &got)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write([]byte("{}"))
 		return
 	}
 
@@ -108,19 +106,16 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 
 	if !c.store.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.store.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
 		return
 	}
 
@@ -157,7 +152,6 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 
 	if got == (expectedFormat{}) {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write([]byte("{}"))
 		return
 	}
 
@@ -165,14 +159,12 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 
 	if !c.store.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte("{}"))
 		return
 	}
 
 	c.store.DeleteCategory(got.ID)
 
-	res.WriteHeader(http.StatusOK)
-	res.Write([]byte("{}"))
+	res.WriteHeader(http.StatusNoContent)
 }
 
 func IsValidCategoryName(name string) bool {
