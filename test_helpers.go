@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/rs/xid"
@@ -41,17 +43,24 @@ func NewDeleteRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
-func assertNumbersEqual(t *testing.T, a, b int) {
+func assertNumbersEqual(t *testing.T, got, want int) {
 	t.Helper()
-	if a != b {
-		t.Errorf("got %d wanted %d", a, b)
+	if got != want {
+		t.Errorf("got %d wanted %d", got, want)
 	}
 }
 
-func assertStringsEqual(t *testing.T, a, b string) {
+func assertStringsEqual(t *testing.T, got, want string) {
 	t.Helper()
-	if a != b {
-		t.Errorf("got '%s' wanted '%s'", a, b)
+	if got != want {
+		t.Errorf("got '%s' wanted '%s'", got, want)
+	}
+}
+
+func assertDeepEqual(t *testing.T, got, want interface{}) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got '%v' wanted '%v'", got, want)
 	}
 }
 
@@ -74,4 +83,39 @@ func categoryToString(t *testing.T, c Category) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func readBodyBytes(t *testing.T, b io.ReadCloser) []byte {
+	t.Helper()
+	body, err := ioutil.ReadAll(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return body
+}
+
+func unmarshallCategoryListFromBody(t *testing.T, b io.ReadCloser) CategoryList {
+	bodyBytes := readBodyBytes(t, b)
+
+	var got CategoryList
+
+	err := json.Unmarshal(bodyBytes, &got)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
+}
+
+func unmarshallCategoryFromBody(t *testing.T, b io.ReadCloser) Category {
+	bodyBytes := readBodyBytes(t, b)
+
+	var got Category
+
+	err := json.Unmarshal(bodyBytes, &got)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
 }

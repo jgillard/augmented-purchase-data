@@ -15,7 +15,7 @@ type CategoryStore interface {
 	AddCategory(categoryName string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
-	CategoryIdExists(categoryID string) bool
+	CategoryIDExists(categoryID string) bool
 	CategoryNameExists(categoryName string) bool
 }
 
@@ -106,7 +106,7 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 	categoryID := got.ID
 	categoryName := got.Name
 
-	if !c.store.CategoryIdExists(categoryID) {
+	if !c.store.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		res.Write([]byte("{}"))
 		return
@@ -163,7 +163,7 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 
 	categoryID := got.ID
 
-	if !c.store.CategoryIdExists(categoryID) {
+	if !c.store.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		res.Write([]byte("{}"))
 		return

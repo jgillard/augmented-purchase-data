@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -16,16 +14,16 @@ import (
 
 func TestListCategories(t *testing.T) {
 
-	t.Run("it returns a json category list", func(t *testing.T) {
-		categoryList := CategoryList{
-			Categories: []Category{
-				Category{ID: "1234", Name: "accommodation"},
-				Category{ID: "5678", Name: "food and drink"},
-			},
-		}
-		store := &StubCategoryStore{categoryList}
-		server := NewCategoryServer(store)
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "accommodation"},
+			Category{ID: "5678", Name: "food and drink"},
+		},
+	}
+	store := &StubCategoryStore{categoryList}
+	server := NewCategoryServer(store)
 
+	t.Run("it returns a json category list", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
@@ -35,23 +33,9 @@ func TestListCategories(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		bodyBytes, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		var got CategoryList
-
-		err = json.Unmarshal(bodyBytes, &got)
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		got := unmarshallCategoryListFromBody(t, result.Body)
 		want := categoryList
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%v' wanted '%v'", got, want)
-		}
+		assertDeepEqual(t, got, want)
 	})
 }
 
@@ -78,14 +62,9 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(body)
+		got := string(readBodyBytes(t, result.Body))
 		want := "{}"
-		assertStringsEqual(t, got, want)
+		assertBodyString(t, got, want)
 	})
 
 	t.Run("success response", func(t *testing.T) {
@@ -99,17 +78,7 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		var got Category
-
-		err = json.Unmarshal(body, &got)
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallCategoryFromBody(t, result.Body)
 
 		assertStringsEqual(t, got.ID, stubCategory.ID)
 		assertStringsEqual(t, got.Name, stubCategory.Name)
@@ -149,19 +118,13 @@ func TestAddCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-				responseBody, err := ioutil.ReadAll(result.Body)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
 
 				// check the store is unmodified
 				got := store.categories
 				want := stubCategories
-				if !reflect.DeepEqual(got, want) {
-					t.Errorf("got '%v' wanted '%v'", got, want)
-				}
+				assertDeepEqual(t, got, want)
 			})
 		}
 	})
@@ -178,17 +141,7 @@ func TestAddCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		bodyBytes, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		var got Category
-
-		err = json.Unmarshal(bodyBytes, &got)
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallCategoryFromBody(t, result.Body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -235,19 +188,13 @@ func TestRenameCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-				responseBody, err := ioutil.ReadAll(result.Body)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
 
 				// check the store is unmodified
 				got := store.categories
 				want := stubCategories
-				if !reflect.DeepEqual(got, want) {
-					t.Errorf("got '%v' wanted '%v'", got, want)
-				}
+				assertDeepEqual(t, got, want)
 			})
 		}
 	})
@@ -268,12 +215,9 @@ func TestRenameCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
+		responseBody := readBodyBytes(t, result.Body)
 
-		assertBodyString(t, string(body), string(requestBody))
+		assertBodyString(t, string(responseBody), string(requestBody))
 
 		// check the store is updated
 		got := store.categories.Categories[0].Name
@@ -316,24 +260,18 @@ func TestRemoveCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-				responseBody, err := ioutil.ReadAll(result.Body)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
 
 				// check the store is unmodified
 				got := store.categories
 				want := stubCategories
-				if !reflect.DeepEqual(got, want) {
-					t.Errorf("got '%v' wanted '%v'", got, want)
-				}
+				assertDeepEqual(t, got, want)
 			})
 		}
 	})
 
-	t.Run("test success responses & effect", func(t *testing.T) {
+	t.Run("test success response & effect", func(t *testing.T) {
 		body := strings.NewReader(`{"id":"1234"}`)
 		req := NewDeleteRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -345,21 +283,13 @@ func TestRemoveCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		responseBody, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(responseBody)
-		want := "{}"
-		assertStringsEqual(t, got, want)
+		responseBody := readBodyBytes(t, result.Body)
+		assertBodyString(t, string(responseBody), "{}")
 
 		// check store is updated
-		gotStore := store.categories
-		wantStore := CategoryList{}
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%v' wanted '%v'", gotStore, wantStore)
-		}
+		got := len(store.categories.Categories)
+		want := 0
+		assertNumbersEqual(t, got, want)
 	})
 }
 
@@ -443,7 +373,7 @@ func (s *StubCategoryStore) DeleteCategory(id string) {
 	s.categories.Categories = append(s.categories.Categories[:index], s.categories.Categories[index+1:]...)
 }
 
-func (s *StubCategoryStore) CategoryIdExists(categoryID string) bool {
+func (s *StubCategoryStore) CategoryIDExists(categoryID string) bool {
 	alreadyExists := false
 
 	for _, c := range s.categories.Categories {

@@ -23,7 +23,7 @@ func TestStatusHandler(t *testing.T) {
 	t.Run("check status response code", func(t *testing.T) {
 		status := result.StatusCode
 		desiredStatus := http.StatusOK
-		assertNumbersEqual(t, status, desiredStatus)
+		assertStatusCode(t, status, desiredStatus)
 	})
 
 	t.Run("check status response body", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestStatusHandler(t *testing.T) {
 		}
 		bodyString := string(body)
 		desiredBody := statusBodyString
-		assertStringsEqual(t, bodyString, desiredBody)
+		assertBodyString(t, bodyString, desiredBody)
 	})
 
 }
