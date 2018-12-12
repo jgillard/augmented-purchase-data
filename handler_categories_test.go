@@ -60,11 +60,8 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
-
-		got := string(readBodyBytes(t, result.Body))
-		want := "{}"
-		assertBodyString(t, got, want)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyEmpty(t, result.Body)
 	})
 
 	t.Run("success response", func(t *testing.T) {
@@ -115,10 +112,8 @@ func TestAddCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-
-				responseBody := readBodyBytes(t, result.Body)
-				assertBodyString(t, string(responseBody), "{}")
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -150,6 +145,9 @@ func TestAddCategory(t *testing.T) {
 		got = store.categories.Categories[1]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
+
+		// get ID from store and check that's in returned Location header
+		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s", got.ID))
 	})
 }
 
@@ -185,10 +183,8 @@ func TestRenameCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-
-				responseBody := readBodyBytes(t, result.Body)
-				assertBodyString(t, string(responseBody), "{}")
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -256,10 +252,8 @@ func TestRemoveCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-
-				responseBody := readBodyBytes(t, result.Body)
-				assertBodyString(t, string(responseBody), "{}")
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -278,11 +272,9 @@ func TestRemoveCategory(t *testing.T) {
 		result := res.Result()
 
 		// check response
-		assertStatusCode(t, result.StatusCode, http.StatusOK)
-
-		responseBody := readBodyBytes(t, result.Body)
-		assertBodyString(t, string(responseBody), "{}")
+		assertStatusCode(t, result.StatusCode, http.StatusNoContent)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyEmpty(t, result.Body)
 
 		// check store is updated
 		got := len(store.categories.Categories)

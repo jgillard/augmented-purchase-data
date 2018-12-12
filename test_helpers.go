@@ -76,6 +76,14 @@ func assertIsXid(t *testing.T, s string) {
 	}
 }
 
+func assertBodyEmpty(t *testing.T, b io.ReadCloser) {
+	t.Helper()
+	got := readBodyBytes(t, b)
+	if got != nil {
+		t.Errorf("wanted an empty response body, got '%s'", got)
+	}
+}
+
 func categoryToString(t *testing.T, c Category) string {
 	t.Helper()
 	data, err := json.Marshal(c)
