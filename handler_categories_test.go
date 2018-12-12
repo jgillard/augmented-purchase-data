@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,34 +16,25 @@ import (
 
 func TestListCategories(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "accommodation"},
-			Category{ID: "5678", Name: "food and drink"},
-		},
-	}
-	store := &StubCategoryStore{categoryList}
-	server := NewCategoryServer(store)
+	t.Run("it returns a json category list", func(t *testing.T) {
+		categoryList := CategoryList{
+			Categories: []Category{
+				Category{ID: "1234", Name: "accommodation"},
+				Category{ID: "5678", Name: "food and drink"},
+			},
+		}
+		store := &StubCategoryStore{categoryList}
+		server := NewCategoryServer(store)
 
-	req := NewGetRequest(t, "/categories")
-	res := httptest.NewRecorder()
+		req := NewGetRequest(t, "/categories")
+		res := httptest.NewRecorder()
 
-	server.ServeHTTP(res, req)
-	result := res.Result()
+		server.ServeHTTP(res, req)
+		result := res.Result()
 
-	t.Run("success status code", func(t *testing.T) {
-		got := result.StatusCode
-		want := http.StatusOK
-		assertNumbersEqual(t, got, want)
-	})
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-	t.Run("content-type header", func(t *testing.T) {
-		got := result.Header.Get("content-type")
-		want := jsonContentType
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("response format", func(t *testing.T) {
 		bodyBytes, err := ioutil.ReadAll(result.Body)
 		if err != nil {
 			t.Fatal(err)
@@ -75,48 +67,37 @@ func TestGetCategory(t *testing.T) {
 	}
 	server := NewCategoryServer(store)
 
-	t.Run("content-type header", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories/1234")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.Header.Get("content-type")
-		want := jsonContentType
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("success status code", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories/1234")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusOK
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("not-found status code", func(t *testing.T) {
+	t.Run("not-found failure reponse", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories/5678")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.StatusCode
-		want := http.StatusNotFound
-		assertNumbersEqual(t, got, want)
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+
+		body, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		got := string(body)
+		want := "{}"
+		assertStringsEqual(t, got, want)
 	})
 
-	t.Run("success response format", func(t *testing.T) {
+	t.Run("success response", func(t *testing.T) {
 		req := NewGetRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		body, err := ioutil.ReadAll(result.Body)
 		if err != nil {
@@ -133,26 +114,10 @@ func TestGetCategory(t *testing.T) {
 		assertStringsEqual(t, got.ID, stubCategory.ID)
 		assertStringsEqual(t, got.Name, stubCategory.Name)
 	})
-
-	t.Run("not-found response format", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories/5678")
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(body)
-		want := "{}"
-		assertStringsEqual(t, got, want)
-	})
 }
 
 func TestAddCategory(t *testing.T) {
+
 	stubCategories := CategoryList{
 		Categories: []Category{
 			Category{ID: "1234", Name: "existing category name"},
@@ -161,72 +126,47 @@ func TestAddCategory(t *testing.T) {
 	store := &StubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
-	t.Run("content-type header", func(t *testing.T) {
-		body := strings.NewReader("foo")
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.Header.Get("content-type")
-		want := jsonContentType
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("success status code", func(t *testing.T) {
-		categoryName := "new category name"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusCreated
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("duplicate failure status code", func(t *testing.T) {
-		categoryName := "existing category name"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusConflict
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("invalid name failure status code", func(t *testing.T) {
-		categoryName := "abc123!@£"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusUnprocessableEntity
-		assertNumbersEqual(t, got, want)
-
-		responseBody, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			value string
+			want  int
+		}{
+			{name: "duplicate name", value: "existing category name", want: http.StatusConflict},
+			{name: "invalid name", value: "abc123!@£", want: http.StatusUnprocessableEntity},
 		}
 
-		gotBody := string(responseBody)
-		wantBody := "{}"
-		assertStringsEqual(t, gotBody, wantBody)
+		for _, c := range cases {
+			t.Run(c.name, func(t *testing.T) {
+				body := strings.NewReader(c.value)
+				req := NewPostRequest(t, "/categories", body)
+				res := httptest.NewRecorder()
 
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+
+				responseBody, err := ioutil.ReadAll(result.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assertBodyString(t, string(responseBody), "{}")
+
+				// check the store is unmodified
+				got := store.categories
+				want := stubCategories
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("got '%v' wanted '%v'", got, want)
+				}
+			})
+		}
 	})
 
-	t.Run("success response format", func(t *testing.T) {
+	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
 		body := strings.NewReader(categoryName)
 		req := NewPostRequest(t, "/categories", body)
@@ -234,6 +174,9 @@ func TestAddCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+
+		assertStatusCode(t, result.StatusCode, http.StatusCreated)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		bodyBytes, err := ioutil.ReadAll(result.Body)
 		if err != nil {
@@ -247,263 +190,95 @@ func TestAddCategory(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		// check the response
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
-	})
 
-	t.Run("failure response format", func(t *testing.T) {
-		categoryName := "existing category name"
-		requestBody := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", requestBody)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		responseBody, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(responseBody)
-		want := "{}"
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("success store updated", func(t *testing.T) {
-		categoryName := "new category name"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
-		got := store.categories.Categories[1]
+		// check the store has been modified
+		got = store.categories.Categories[1]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
-	})
-
-	t.Run("failure store unmodified", func(t *testing.T) {
-		categoryName := "existing category name"
-		body := strings.NewReader(categoryName)
-		req := NewPostRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
-		got := store.categories.Categories
-		want := stubCategories
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%v' wanted '%v'", got, want)
-		}
 	})
 }
 
 func TestRenameCategory(t *testing.T) {
 
-	existingCategory := Category{ID: "1234", Name: "accommodation"}
-	store := &StubCategoryStore{
-		CategoryList{
-			Categories: []Category{
-				existingCategory,
-			},
+	stubCategories := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "accommodation"},
 		},
 	}
+	store := &StubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
-	t.Run("content-type header", func(t *testing.T) {
-		body := []byte("foo")
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.Header.Get("content-type")
-		want := jsonContentType
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("success status code", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "new category name"}
-		body, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			value string
+			want  int
+		}{
+			{name: "invalid json", value: "foo", want: http.StatusBadRequest},
+			{name: "invalid name", value: categoryToString(t, Category{ID: "1234", Name: "foo/*!bar"}), want: http.StatusUnprocessableEntity},
+			{name: "name not found", value: categoryToString(t, Category{ID: "5678", Name: "irrelevant"}), want: http.StatusNotFound},
 		}
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
 
-		server.ServeHTTP(res, req)
-		result := res.Result()
+		for _, c := range cases {
+			t.Run(c.name, func(t *testing.T) {
+				body := strings.NewReader(c.value)
+				req := NewPutRequest(t, "/categories", body)
+				res := httptest.NewRecorder()
 
-		got := result.StatusCode
-		want := http.StatusOK
-		assertNumbersEqual(t, got, want)
-	})
+				server.ServeHTTP(res, req)
+				result := res.Result()
 
-	t.Run("invalid json failure status code", func(t *testing.T) {
-		body := []byte("foo")
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
-		server.ServeHTTP(res, req)
-		result := res.Result()
+				responseBody, err := ioutil.ReadAll(result.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-		got := result.StatusCode
-		want := http.StatusBadRequest
-		assertNumbersEqual(t, got, want)
-	})
+				assertBodyString(t, string(responseBody), "{}")
 
-	t.Run("invalid name failure status code", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "foo/*!bar"}
-		body, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
+				// check the store is unmodified
+				got := store.categories
+				want := stubCategories
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("got '%v' wanted '%v'", got, want)
+				}
+			})
 		}
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusUnprocessableEntity
-		assertNumbersEqual(t, got, want)
 	})
 
-	t.Run("not-found failure status code", func(t *testing.T) {
-		renamedCategory := Category{ID: "5678", Name: "irrelevant"}
-		body, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusNotFound
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("success response format", func(t *testing.T) {
+	t.Run("test success responses & effect", func(t *testing.T) {
 		renamedCategory := Category{ID: "1234", Name: "new category name"}
 		requestBody, err := json.Marshal(renamedCategory)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := NewPutRequest(t, "/categories", requestBody)
+		req := NewPutRequest(t, "/categories", bytes.NewReader(requestBody))
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		body, err := ioutil.ReadAll(result.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		got := string(body)
-		want := string(requestBody)
-		assertStringsEqual(t, got, want)
-	})
+		assertBodyString(t, string(body), string(requestBody))
 
-	t.Run("invalid json failure reponse format", func(t *testing.T) {
-		body := []byte("foo")
-		req := NewPutRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(body)
-		want := "{}"
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("invalid name failure reponse format", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "foo/*!bar"}
-		requestBody, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req := NewPutRequest(t, "/categories", requestBody)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(body)
-		want := "{}"
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("not-found failure reponse format", func(t *testing.T) {
-		renamedCategory := Category{ID: "5678", Name: "irrelevant"}
-		requestBody, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req := NewPutRequest(t, "/categories", requestBody)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		got := string(body)
-		want := "{}"
-		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("success store updated", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "new category name"}
-		requestBody, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req := NewPutRequest(t, "/categories", requestBody)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
+		// check the store is updated
 		got := store.categories.Categories[0].Name
 		want := renamedCategory.Name
 		assertStringsEqual(t, got, want)
-	})
-
-	t.Run("failure store unmodified", func(t *testing.T) {
-		renamedCategory := Category{ID: "1234", Name: "foo/*!bar"}
-		requestBody, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req := NewPutRequest(t, "/categories", requestBody)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
-		got := store.categories.Categories
-		want := existingCategory
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%v' wanted '%v'", got, want)
-		}
 	})
 }
 
@@ -518,20 +293,47 @@ func TestRemoveCategory(t *testing.T) {
 	store := &StubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
-	t.Run("content-type header", func(t *testing.T) {
-		body := strings.NewReader("{}")
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			value string
+			want  int
+		}{
+			{name: "invalid category json", value: `{"foo":"bar"}`, want: http.StatusBadRequest},
+			{name: "category not found", value: `{"id":"5678"}`, want: http.StatusNotFound},
+		}
 
-		server.ServeHTTP(res, req)
-		result := res.Result()
+		for _, c := range cases {
+			t.Run(c.name, func(t *testing.T) {
+				body := strings.NewReader(c.value)
+				req := NewDeleteRequest(t, "/categories", body)
+				res := httptest.NewRecorder()
 
-		got := result.Header.Get("content-type")
-		want := jsonContentType
-		assertStringsEqual(t, got, want)
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+
+				responseBody, err := ioutil.ReadAll(result.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				assertBodyString(t, string(responseBody), "{}")
+
+				// check the store is unmodified
+				got := store.categories
+				want := stubCategories
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("got '%v' wanted '%v'", got, want)
+				}
+			})
+		}
 	})
 
-	t.Run("success status code", func(t *testing.T) {
+	t.Run("test success responses & effect", func(t *testing.T) {
 		body := strings.NewReader(`{"id":"1234"}`)
 		req := NewDeleteRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
@@ -539,44 +341,9 @@ func TestRemoveCategory(t *testing.T) {
 		server.ServeHTTP(res, req)
 		result := res.Result()
 
-		got := result.StatusCode
-		want := http.StatusOK
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("invalid category json failure status code", func(t *testing.T) {
-		body := strings.NewReader(`{"foo":"bar"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusBadRequest
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("not-found failure status code", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"5678"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		got := result.StatusCode
-		want := http.StatusNotFound
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("success reponse format", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"1234"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
+		// check response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		responseBody, err := ioutil.ReadAll(result.Body)
 		if err != nil {
@@ -586,50 +353,14 @@ func TestRemoveCategory(t *testing.T) {
 		got := string(responseBody)
 		want := "{}"
 		assertStringsEqual(t, got, want)
-	})
 
-	t.Run("any failure reponse format", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"5678"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-		result := res.Result()
-
-		responseBody, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatal(err)
+		// check store is updated
+		gotStore := store.categories
+		wantStore := CategoryList{}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got '%v' wanted '%v'", gotStore, wantStore)
 		}
-
-		got := string(responseBody)
-		want := "{}"
-		assertStringsEqual(t, got, want)
 	})
-
-	t.Run("success store updated", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"1234"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
-		got := len(store.categories.Categories)
-		want := 0
-		assertNumbersEqual(t, got, want)
-	})
-
-	t.Run("failure store unmodified", func(t *testing.T) {
-		body := strings.NewReader(`{"id":"5678"}`)
-		req := NewDeleteRequest(t, "/categories", body)
-		res := httptest.NewRecorder()
-
-		server.ServeHTTP(res, req)
-
-		got := len(store.categories.Categories)
-		want := 1
-		assertNumbersEqual(t, got, want)
-	})
-
 }
 
 func TestIsValidCategoryName(t *testing.T) {

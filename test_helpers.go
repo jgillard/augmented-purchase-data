@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -25,8 +25,7 @@ func NewPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
-func NewPutRequest(t *testing.T, path string, b []byte) *http.Request {
-	body := bytes.NewBuffer(b)
+func NewPutRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(http.MethodPut, path, body)
 	if err != nil {
 		t.Fatal(err)
@@ -56,10 +55,23 @@ func assertStringsEqual(t *testing.T, a, b string) {
 	}
 }
 
+var assertStatusCode = assertNumbersEqual
+var assertContentType = assertStringsEqual
+var assertBodyString = assertStringsEqual
+
 func assertIsXid(t *testing.T, s string) {
 	t.Helper()
 	_, err := xid.FromString(s)
 	if err != nil {
 		t.Fatalf("got ID '%s' which isn't an xid", s)
 	}
+}
+
+func categoryToString(t *testing.T, c Category) string {
+	t.Helper()
+	data, err := json.Marshal(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }

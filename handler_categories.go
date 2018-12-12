@@ -99,6 +99,7 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 	err = json.Unmarshal(requestBody, &got)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -107,16 +108,19 @@ func (c *CategoryServer) CategoryPutHandler(res http.ResponseWriter, req *http.R
 
 	if !c.store.CategoryIdExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.store.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -153,6 +157,7 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 
 	if got == (expectedFormat{}) {
 		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -160,6 +165,7 @@ func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *htt
 
 	if !c.store.CategoryIdExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
