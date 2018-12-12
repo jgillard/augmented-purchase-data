@@ -31,7 +31,7 @@ func TestListCategories(t *testing.T) {
 		result := res.Result()
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallCategoryListFromBody(t, result.Body)
 		want := categoryList
@@ -60,11 +60,11 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		got := string(readBodyBytes(t, result.Body))
 		want := "{}"
 		assertBodyString(t, got, want)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 	})
 
 	t.Run("success response", func(t *testing.T) {
@@ -76,10 +76,9 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallCategoryFromBody(t, result.Body)
-
 		assertStringsEqual(t, got.ID, stubCategory.ID)
 		assertStringsEqual(t, got.Name, stubCategory.Name)
 	})
@@ -116,10 +115,10 @@ func TestAddCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 				// check the store is unmodified
 				got := store.categories
@@ -139,7 +138,7 @@ func TestAddCategory(t *testing.T) {
 		result := res.Result()
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallCategoryFromBody(t, result.Body)
 
@@ -186,10 +185,10 @@ func TestRenameCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 				// check the store is unmodified
 				got := store.categories
@@ -213,10 +212,9 @@ func TestRenameCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		responseBody := readBodyBytes(t, result.Body)
-
 		assertBodyString(t, string(responseBody), string(requestBody))
 
 		// check the store is updated
@@ -258,10 +256,10 @@ func TestRemoveCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 				responseBody := readBodyBytes(t, result.Body)
 				assertBodyString(t, string(responseBody), "{}")
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 				// check the store is unmodified
 				got := store.categories
@@ -281,10 +279,10 @@ func TestRemoveCategory(t *testing.T) {
 
 		// check response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get("content-type"), jsonContentType)
 
 		responseBody := readBodyBytes(t, result.Body)
 		assertBodyString(t, string(responseBody), "{}")
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		// check store is updated
 		got := len(store.categories.Categories)

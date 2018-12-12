@@ -28,7 +28,7 @@ func NewCategoryServer(store CategoryStore) *CategoryServer {
 
 func (c *CategoryServer) categoriesHandler(res http.ResponseWriter, req *http.Request) {
 
-	res.Header().Set("content-type", jsonContentType)
+	res.Header().Set("Content-Type", jsonContentType)
 
 	switch req.Method {
 	case http.MethodGet:
