@@ -1,4 +1,4 @@
-package handlers
+package transactioncategories
 
 import (
 	"bytes"
@@ -20,11 +20,11 @@ func TestListCategories(t *testing.T) {
 			Category{ID: "5678", Name: "food and drink"},
 		},
 	}
-	store := &StubCategoryStore{categoryList}
+	store := &stubCategoryStore{categoryList}
 	server := NewCategoryServer(store)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories")
+		req := newGetRequest(t, "/categories")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -42,7 +42,7 @@ func TestListCategories(t *testing.T) {
 func TestGetCategory(t *testing.T) {
 
 	stubCategory := Category{ID: "1234", Name: "accommodation"}
-	store := &StubCategoryStore{
+	store := &stubCategoryStore{
 		CategoryList{
 			Categories: []Category{
 				stubCategory,
@@ -52,7 +52,7 @@ func TestGetCategory(t *testing.T) {
 	server := NewCategoryServer(store)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories/5678")
+		req := newGetRequest(t, "/categories/5678")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -65,7 +65,7 @@ func TestGetCategory(t *testing.T) {
 	})
 
 	t.Run("success response", func(t *testing.T) {
-		req := NewGetRequest(t, "/categories/1234")
+		req := newGetRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -88,7 +88,7 @@ func TestAddCategory(t *testing.T) {
 			Category{ID: "1234", Name: "existing category name"},
 		},
 	}
-	store := &StubCategoryStore{stubCategories}
+	store := &stubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestAddCategory(t *testing.T) {
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
 				body := strings.NewReader(c.value)
-				req := NewPostRequest(t, "/categories", body)
+				req := newPostRequest(t, "/categories", body)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
@@ -127,7 +127,7 @@ func TestAddCategory(t *testing.T) {
 	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
 		body := strings.NewReader(fmt.Sprintf(`{"name":"%s"}`, categoryName))
-		req := NewPostRequest(t, "/categories", body)
+		req := newPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -159,7 +159,7 @@ func TestRenameCategory(t *testing.T) {
 			Category{ID: "1234", Name: "accommodation"},
 		},
 	}
-	store := &StubCategoryStore{stubCategories}
+	store := &stubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -178,7 +178,7 @@ func TestRenameCategory(t *testing.T) {
 		for _, c := range cases {
 			t.Run(c.testName, func(t *testing.T) {
 				body := strings.NewReader(c.body)
-				req := NewPatchRequest(t, fmt.Sprintf("/categories/%s", c.ID), body)
+				req := newPatchRequest(t, fmt.Sprintf("/categories/%s", c.ID), body)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
@@ -198,12 +198,12 @@ func TestRenameCategory(t *testing.T) {
 	})
 
 	t.Run("test success responses & effect", func(t *testing.T) {
-		newCatName := JsonName{Name: "new category name"}
+		newCatName := jsonName{Name: "new category name"}
 		requestBody, err := json.Marshal(newCatName)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req := NewPatchRequest(t, "/categories/1234", bytes.NewReader(requestBody))
+		req := newPatchRequest(t, "/categories/1234", bytes.NewReader(requestBody))
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -237,7 +237,7 @@ func TestRemoveCategory(t *testing.T) {
 			existingCategory,
 		},
 	}
-	store := &StubCategoryStore{stubCategories}
+	store := &stubCategoryStore{stubCategories}
 	server := NewCategoryServer(store)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestRemoveCategory(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.name, func(t *testing.T) {
-				req := NewDeleteRequest(t, fmt.Sprintf("/categories/%s", c.ID))
+				req := newDeleteRequest(t, fmt.Sprintf("/categories/%s", c.ID))
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
@@ -271,7 +271,7 @@ func TestRemoveCategory(t *testing.T) {
 	})
 
 	t.Run("test success response & effect", func(t *testing.T) {
-		req := NewDeleteRequest(t, "/categories/1234")
+		req := newDeleteRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
@@ -289,7 +289,7 @@ func TestRemoveCategory(t *testing.T) {
 	})
 }
 
-func TestIsValidCategoryName(t *testing.T) {
+func testIsValidCategoryName(t *testing.T) {
 	cases := map[string]string{
 		"empty string":         "",
 		"only whitespace":      "     ",
@@ -312,15 +312,15 @@ func TestIsValidCategoryName(t *testing.T) {
 	}
 }
 
-type StubCategoryStore struct {
+type stubCategoryStore struct {
 	categories CategoryList
 }
 
-func (s *StubCategoryStore) ListCategories() CategoryList {
+func (s *stubCategoryStore) ListCategories() CategoryList {
 	return s.categories
 }
 
-func (s *StubCategoryStore) GetCategory(id string) Category {
+func (s *stubCategoryStore) GetCategory(id string) Category {
 	var category Category
 
 	for _, c := range s.categories.Categories {
@@ -331,7 +331,7 @@ func (s *StubCategoryStore) GetCategory(id string) Category {
 	return category
 }
 
-func (s *StubCategoryStore) AddCategory(categoryName string) Category {
+func (s *stubCategoryStore) AddCategory(categoryName string) Category {
 	newCat := Category{
 		ID:   xid.New().String(),
 		Name: categoryName,
@@ -342,7 +342,7 @@ func (s *StubCategoryStore) AddCategory(categoryName string) Category {
 	return newCat
 }
 
-func (s *StubCategoryStore) RenameCategory(id, name string) Category {
+func (s *stubCategoryStore) RenameCategory(id, name string) Category {
 	index := 0
 
 	for i, c := range s.categories.Categories {
@@ -356,7 +356,7 @@ func (s *StubCategoryStore) RenameCategory(id, name string) Category {
 	return s.categories.Categories[index]
 }
 
-func (s *StubCategoryStore) DeleteCategory(id string) {
+func (s *stubCategoryStore) DeleteCategory(id string) {
 	index := 0
 
 	for i, c := range s.categories.Categories {
@@ -369,7 +369,7 @@ func (s *StubCategoryStore) DeleteCategory(id string) {
 	s.categories.Categories = append(s.categories.Categories[:index], s.categories.Categories[index+1:]...)
 }
 
-func (s *StubCategoryStore) CategoryIDExists(categoryID string) bool {
+func (s *stubCategoryStore) categoryIDExists(categoryID string) bool {
 	alreadyExists := false
 
 	for _, c := range s.categories.Categories {
@@ -381,7 +381,7 @@ func (s *StubCategoryStore) CategoryIDExists(categoryID string) bool {
 	return alreadyExists
 }
 
-func (s *StubCategoryStore) CategoryNameExists(categoryName string) bool {
+func (s *stubCategoryStore) categoryNameExists(categoryName string) bool {
 	alreadyExists := false
 
 	for _, c := range s.categories.Categories {

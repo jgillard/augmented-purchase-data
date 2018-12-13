@@ -1,4 +1,4 @@
-package handlers
+package transactioncategories
 
 import (
 	"net/http"
@@ -7,8 +7,8 @@ import (
 )
 
 func TestStatusHandler(t *testing.T) {
-	server := NewCategoryServer(&StubCategoryStore{})
-	req := NewGetRequest(t, "/status")
+	server := NewCategoryServer(&stubCategoryStore{})
+	req := newGetRequest(t, "/status")
 	res := httptest.NewRecorder()
 
 	server.ServeHTTP(res, req)

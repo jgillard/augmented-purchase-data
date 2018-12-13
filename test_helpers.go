@@ -1,4 +1,4 @@
-package handlers
+package transactioncategories
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/rs/xid"
 )
 
-func NewGetRequest(t *testing.T, path string) *http.Request {
+func newGetRequest(t *testing.T, path string) *http.Request {
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -19,7 +19,7 @@ func NewGetRequest(t *testing.T, path string) *http.Request {
 	return req
 }
 
-func NewPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
+func newPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(http.MethodPost, path, body)
 	if err != nil {
 		t.Fatal(err)
@@ -27,7 +27,7 @@ func NewPostRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
-func NewPatchRequest(t *testing.T, path string, body io.Reader) *http.Request {
+func newPatchRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(http.MethodPatch, path, body)
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +35,7 @@ func NewPatchRequest(t *testing.T, path string, body io.Reader) *http.Request {
 	return req
 }
 
-func NewDeleteRequest(t *testing.T, path string) *http.Request {
+func newDeleteRequest(t *testing.T, path string) *http.Request {
 	req, err := http.NewRequest(http.MethodDelete, path, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -82,15 +82,6 @@ func assertBodyEmpty(t *testing.T, b io.ReadCloser) {
 	if len(got) != 0 {
 		t.Errorf("wanted an empty response body, got '%s'", got)
 	}
-}
-
-func categoryToString(t *testing.T, c Category) string {
-	t.Helper()
-	data, err := json.Marshal(c)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(data)
 }
 
 func readBodyBytes(t *testing.T, b io.ReadCloser) []byte {

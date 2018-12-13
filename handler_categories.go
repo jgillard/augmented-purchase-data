@@ -1,4 +1,4 @@
-package handlers
+package transactioncategories
 
 import (
 	"encoding/json"
@@ -16,8 +16,8 @@ type CategoryStore interface {
 	AddCategory(categoryName string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
-	CategoryIDExists(categoryID string) bool
-	CategoryNameExists(categoryName string) bool
+	categoryIDExists(categoryID string) bool
+	categoryNameExists(categoryName string) bool
 }
 
 type CategoryList struct {
@@ -29,11 +29,11 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-type JsonID struct {
+type jsonID struct {
 	ID string `json:"id"`
 }
 
-type JsonName struct {
+type jsonName struct {
 	Name string `json:"name"`
 }
 
@@ -42,6 +42,7 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 	var err error
 
 	if strings.HasPrefix(req.URL.Path, "/categories/") && len(req.URL.Path) > len("/categories/") {
+		// GET a specific category
 		categoryID := req.URL.Path[len("/categories/"):]
 		category := c.store.GetCategory(categoryID)
 		if category == (Category{}) {
@@ -54,6 +55,7 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 			log.Fatal(err)
 		}
 	} else {
+		// GET the list of categories
 		categoryList := c.store.ListCategories()
 		payload, err = json.Marshal(categoryList)
 		if err != nil {
@@ -71,24 +73,17 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 		log.Fatal(err)
 	}
 
-	var got JsonName
+	var got jsonName
+	UnmarshallRequest(requestBody, &got)
 
-	err = json.Unmarshal(requestBody, &got)
-	// json.unmarshall will not error if fields don't match
-	// however got will be an empty struct, check that below
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	if got == (JsonName{}) {
+	if got == (jsonName{}) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	categoryName := got.Name
 
-	if c.store.CategoryNameExists(categoryName) {
+	if c.store.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
@@ -118,29 +113,22 @@ func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http
 		log.Fatal(err)
 	}
 
-	var got JsonName
+	var got jsonName
+	UnmarshallRequest(requestBody, &got)
 
-	err = json.Unmarshal(requestBody, &got)
-	// json.unmarshall will not error if fields don't match
-	// however got will be an empty struct, check that below
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	if got == (JsonName{}) {
+	if got == (jsonName{}) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	categoryName := got.Name
 
-	if !c.store.CategoryIDExists(categoryID) {
+	if !c.store.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if c.store.CategoryNameExists(categoryName) {
+	if c.store.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
@@ -164,7 +152,7 @@ func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http
 func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request) {
 	categoryID := req.URL.Path[len("/categories/"):]
 
-	if !c.store.CategoryIDExists(categoryID) {
+	if !c.store.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -187,4 +175,14 @@ func IsValidCategoryName(name string) bool {
 	}
 
 	return isValid
+}
+
+func UnmarshallRequest(body []byte, got interface{}) {
+	err := json.Unmarshal(body, got)
+	// json.unmarshall will not error if fields don't match
+	// however got will be an empty struct, check that below
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 }
