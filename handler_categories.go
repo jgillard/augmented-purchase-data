@@ -25,8 +25,15 @@ type CategoryList struct {
 }
 
 type Category struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	ParentID string `json:"parentID"`
+}
+
+// is this a very odd thing to do?
+type CategoryGetResponse struct {
+	Category
+	Children []Category `json:"children"`
 }
 
 type jsonID struct {

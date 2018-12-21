@@ -99,6 +99,7 @@ func unmarshallCategoryListFromBody(t *testing.T, b io.ReadCloser) CategoryList 
 	var got CategoryList
 
 	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,6 +113,21 @@ func unmarshallCategoryFromBody(t *testing.T, b io.ReadCloser) Category {
 	var got Category
 
 	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
+}
+
+func unmarshallCategoryGetResponseFromBody(t *testing.T, b io.ReadCloser) CategoryGetResponse {
+	bodyBytes := readBodyBytes(t, b)
+
+	var got CategoryGetResponse
+
+	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
 	if err != nil {
 		t.Fatal(err)
 	}

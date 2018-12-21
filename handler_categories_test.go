@@ -16,8 +16,8 @@ func TestListCategories(t *testing.T) {
 
 	categoryList := CategoryList{
 		Categories: []Category{
-			Category{ID: "1234", Name: "accommodation"},
-			Category{ID: "5678", Name: "food and drink"},
+			Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
+			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
 	store := &stubCategoryStore{categoryList}
@@ -36,19 +36,26 @@ func TestListCategories(t *testing.T) {
 		got := unmarshallCategoryListFromBody(t, result.Body)
 		want := categoryList
 		assertDeepEqual(t, got, want)
+		assertStringsEqual(t, got.Categories[0].ID, "abcdef")
+		assertStringsEqual(t, got.Categories[0].Name, "hostel")
+		assertStringsEqual(t, got.Categories[0].ParentID, "1234")
+		assertStringsEqual(t, got.Categories[1].ID, "ghijkm")
+		assertStringsEqual(t, got.Categories[1].Name, "apartment")
+		assertStringsEqual(t, got.Categories[1].ParentID, "1234")
 	})
 }
 
 func TestGetCategory(t *testing.T) {
 
-	stubCategory := Category{ID: "1234", Name: "accommodation"}
-	store := &stubCategoryStore{
-		CategoryList{
-			Categories: []Category{
-				stubCategory,
-			},
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "accommodation", ParentID: ""},
+			Category{ID: "2345", Name: "food and drink", ParentID: ""},
+			Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
+			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
+	store := &stubCategoryStore{categoryList}
 	server := NewCategoryServer(store)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
@@ -64,7 +71,7 @@ func TestGetCategory(t *testing.T) {
 		assertBodyEmpty(t, result.Body)
 	})
 
-	t.Run("success response", func(t *testing.T) {
+	t.Run("get category with children", func(t *testing.T) {
 		req := newGetRequest(t, "/categories/1234")
 		res := httptest.NewRecorder()
 
@@ -75,9 +82,36 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		got := unmarshallCategoryFromBody(t, result.Body)
-		assertStringsEqual(t, got.ID, stubCategory.ID)
-		assertStringsEqual(t, got.Name, stubCategory.Name)
+		got := unmarshallCategoryGetResponseFromBody(t, result.Body)
+		assertStringsEqual(t, got.ID, categoryList.Categories[0].ID)
+		assertStringsEqual(t, got.Name, categoryList.Categories[0].Name)
+		assertStringsEqual(t, got.ParentID, categoryList.Categories[0].ParentID)
+
+		accomodationChildren := []Category{
+			categoryList.Categories[2],
+			categoryList.Categories[3],
+		}
+		assertDeepEqual(t, got.Children, accomodationChildren)
+	})
+
+	t.Run("get category without children", func(t *testing.T) {
+		req := newGetRequest(t, "/categories/2345")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+
+		got := unmarshallCategoryGetResponseFromBody(t, result.Body)
+		assertStringsEqual(t, got.ID, categoryList.Categories[1].ID)
+		assertStringsEqual(t, got.Name, categoryList.Categories[1].Name)
+		assertStringsEqual(t, got.ParentID, categoryList.Categories[1].ParentID)
+
+		foodAndDrinkChildren := []Category{}
+		assertDeepEqual(t, got.Children, foodAndDrinkChildren)
 	})
 }
 
@@ -85,7 +119,7 @@ func TestAddCategory(t *testing.T) {
 
 	stubCategories := CategoryList{
 		Categories: []Category{
-			Category{ID: "1234", Name: "existing category name"},
+			Category{ID: "1234", Name: "existing category name", ParentID: ""},
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
@@ -96,9 +130,12 @@ func TestAddCategory(t *testing.T) {
 			input string
 			want  int
 		}{
-			"invalid json":   {input: `{"foo":""}`, want: http.StatusBadRequest},
-			"duplicate name": {input: `{"name":"existing category name"}`, want: http.StatusConflict},
-			"invalid name":   {input: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
+			"invalid json":           {input: `{"foo":""}`, want: http.StatusBadRequest},
+			"name missing":           {input: `{}`, want: http.StatusBadRequest},
+			"duplicate name":         {input: `{"name":"existing category name"}`, want: http.StatusConflict},
+			"invalid name":           {input: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
+			"parentID missing":       {input: `{"name":"valid name"}`, want: http.StatusBadRequest},
+			"parentID doesn't exist": {input: `{"parentID":"5678"}`, want: http.StatusUnprocessableEntity},
 		}
 
 		for name, c := range cases {
@@ -125,7 +162,8 @@ func TestAddCategory(t *testing.T) {
 
 	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
-		body := strings.NewReader(fmt.Sprintf(`{"name":"%s"}`, categoryName))
+		parentID := ""
+		body := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":"%s"}`, categoryName, parentID))
 		req := newPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
 
@@ -140,11 +178,13 @@ func TestAddCategory(t *testing.T) {
 		// check the response
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
+		assertStringsEqual(t, got.ParentID, parentID)
 
 		// check the store has been modified
 		got = store.categories.Categories[1]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
+		assertStringsEqual(t, got.ParentID, parentID)
 
 		// get ID from store and check that's in returned Location header
 		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s", got.ID))
@@ -155,7 +195,7 @@ func TestRenameCategory(t *testing.T) {
 
 	stubCategories := CategoryList{
 		Categories: []Category{
-			Category{ID: "1234", Name: "accommodation"},
+			Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
@@ -196,8 +236,8 @@ func TestRenameCategory(t *testing.T) {
 	})
 
 	t.Run("test success responses & effect", func(t *testing.T) {
-		newCatName := jsonName{Name: "new category name"}
-		requestBody, err := json.Marshal(newCatName)
+		newCatName := "new category name"
+		requestBody, err := json.Marshal(jsonName{Name: newCatName})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -211,14 +251,12 @@ func TestRenameCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		responseBody := readBodyBytes(t, result.Body)
+		responseBody := unmarshallCategoryFromBody(t, result.Body)
 
-		renamedCategory := Category{ID: "1234", Name: "new category name"}
-		renamedCategoryBytes, err := json.Marshal(renamedCategory)
-		if err != nil {
-			t.Fatal(err)
-		}
-		assertBodyString(t, string(responseBody), string(renamedCategoryBytes))
+		renamedCategory := Category{ID: "1234", Name: newCatName, ParentID: ""}
+		assertStringsEqual(t, responseBody.ID, renamedCategory.ID)
+		assertStringsEqual(t, responseBody.Name, renamedCategory.Name)
+		assertStringsEqual(t, responseBody.ParentID, renamedCategory.ParentID)
 
 		// check the store is updated
 		got := store.categories.Categories[0].Name
