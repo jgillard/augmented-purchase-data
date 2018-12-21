@@ -109,9 +109,7 @@ func TestGetCategory(t *testing.T) {
 		assertStringsEqual(t, got.ID, categoryList.Categories[1].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[1].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[1].ParentID)
-
-		foodAndDrinkChildren := []Category{}
-		assertDeepEqual(t, got.Children, foodAndDrinkChildren)
+		assertNumbersEqual(t, len(got.Children), 0)
 	})
 }
 
@@ -163,7 +161,7 @@ func TestAddCategory(t *testing.T) {
 	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
 		parentID := ""
-		body := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":"%s"}`, categoryName, parentID))
+		body := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":""}`, categoryName))
 		req := newPostRequest(t, "/categories", body)
 		res := httptest.NewRecorder()
 
@@ -355,15 +353,30 @@ func (s *stubCategoryStore) ListCategories() CategoryList {
 	return s.categories
 }
 
-func (s *stubCategoryStore) GetCategory(id string) Category {
+func (s *stubCategoryStore) GetCategory(id string) CategoryGetResponse {
 	var category Category
-
 	for _, c := range s.categories.Categories {
 		if c.ID == id {
 			category = c
 		}
 	}
-	return category
+
+	if category == (Category{}) {
+		return CategoryGetResponse{}
+	}
+
+	var children []Category
+	for _, c := range s.categories.Categories {
+		if c.ParentID == category.ID {
+			children = append(children, c)
+		}
+	}
+
+	response := CategoryGetResponse{
+		category,
+		children,
+	}
+	return response
 }
 
 func (s *stubCategoryStore) AddCategory(categoryName string) Category {
@@ -426,4 +439,16 @@ func (s *stubCategoryStore) categoryNameExists(categoryName string) bool {
 	}
 
 	return alreadyExists
+}
+
+func (s *stubCategoryStore) categoryParentIDExists(parentID string) bool {
+	exists := false
+
+	for _, c := range s.categories.Categories {
+		if c.ID == parentID {
+			exists = true
+		}
+	}
+
+	return exists
 }

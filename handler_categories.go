@@ -6,18 +6,20 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strings"
 )
 
 type CategoryStore interface {
 	ListCategories() CategoryList
-	GetCategory(categoryID string) Category
+	GetCategory(categoryID string) CategoryGetResponse
 	AddCategory(categoryName string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
 	categoryIDExists(categoryID string) bool
 	categoryNameExists(categoryName string) bool
+	categoryParentIDExists(categoryParentID string) bool
 }
 
 type CategoryList struct {
@@ -36,6 +38,13 @@ type CategoryGetResponse struct {
 	Children []Category `json:"children"`
 }
 
+// is this a very odd thing to do?
+type CategoryPostRequest struct {
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	ParentID *string `json:"parentID"`
+}
+
 type jsonID struct {
 	ID string `json:"id"`
 }
@@ -52,7 +61,7 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 		// GET a specific category
 		categoryID := req.URL.Path[len("/categories/"):]
 		category := c.store.GetCategory(categoryID)
-		if category == (Category{}) {
+		if reflect.DeepEqual(category, CategoryGetResponse{}) {
 			res.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -80,10 +89,10 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 		log.Fatal(err)
 	}
 
-	var got jsonName
+	var got CategoryPostRequest
 	UnmarshallRequest(requestBody, &got)
 
-	if got == (jsonName{}) {
+	if reflect.DeepEqual(got, CategoryPostRequest{}) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -96,6 +105,19 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 	}
 
 	if !IsValidCategoryName(categoryName) {
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	// parentID not supplied
+	if got.ParentID == nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	parentID := *got.ParentID
+
+	if !c.store.categoryParentIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
