@@ -20,6 +20,7 @@ type CategoryStore interface {
 	categoryIDExists(categoryID string) bool
 	categoryNameExists(categoryName string) bool
 	categoryParentIDExists(categoryParentID string) bool
+	getCategoryDepth(categoryID string) int
 }
 
 type CategoryList struct {
@@ -118,6 +119,13 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 	parentID := *got.ParentID
 
 	if !c.store.categoryParentIDExists(parentID) && parentID != "" {
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	// checks for parent already a subcategory (depth zero indexed)
+	// we currently confine to 2 levels of categories
+	if c.store.getCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}

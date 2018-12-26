@@ -118,6 +118,7 @@ func TestAddCategory(t *testing.T) {
 	stubCategories := CategoryList{
 		Categories: []Category{
 			Category{ID: "1234", Name: "existing category name", ParentID: ""},
+			Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
@@ -128,12 +129,13 @@ func TestAddCategory(t *testing.T) {
 			input string
 			want  int
 		}{
-			"invalid json":           {input: `{"foo":""}`, want: http.StatusBadRequest},
-			"name missing":           {input: `{}`, want: http.StatusBadRequest},
-			"duplicate name":         {input: `{"name":"existing category name"}`, want: http.StatusConflict},
-			"invalid name":           {input: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
-			"parentID missing":       {input: `{"name":"valid name"}`, want: http.StatusBadRequest},
-			"parentID doesn't exist": {input: `{"parentID":"5678"}`, want: http.StatusUnprocessableEntity},
+			"invalid json":                     {input: `{"foo":""}`, want: http.StatusBadRequest},
+			"name missing":                     {input: `{}`, want: http.StatusBadRequest},
+			"duplicate name":                   {input: `{"name":"existing category name"}`, want: http.StatusConflict},
+			"invalid name":                     {input: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
+			"parentID missing":                 {input: `{"name":"valid name"}`, want: http.StatusBadRequest},
+			"parentID doesn't exist":           {input: `{"parentID":"5678"}`, want: http.StatusUnprocessableEntity},
+			"category would be >2 levels deep": {input: `{"name":"foo", "parentID":"2345"}`, want: http.StatusUnprocessableEntity},
 		}
 
 		for name, c := range cases {
@@ -179,7 +181,7 @@ func TestAddCategory(t *testing.T) {
 		assertStringsEqual(t, got.ParentID, parentID)
 
 		// check the store has been modified
-		got = store.categories.Categories[1]
+		got = store.categories.Categories[2]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
 		assertStringsEqual(t, got.ParentID, parentID)
@@ -451,4 +453,19 @@ func (s *stubCategoryStore) categoryParentIDExists(parentID string) bool {
 	}
 
 	return exists
+}
+
+func (s *stubCategoryStore) getCategoryDepth(categoryID string) int {
+	depth := 0
+
+	for _, c := range s.categories.Categories {
+		if c.ID == categoryID {
+			// if already a subcategory
+			if c.ParentID != "" {
+				depth = 1
+			}
+		}
+	}
+
+	return depth
 }
