@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestListQuestions(t *testing.T) {
+func TestListQuestionsForCategory(t *testing.T) {
 
 	questionList := QuestionList{
 		Questions: []Question{
@@ -15,7 +15,7 @@ func TestListQuestions(t *testing.T) {
 		},
 	}
 	questionStore := &stubQuestionStore{questionList}
-	server := NewCategoryServer(null, questionStore)
+	server := NewServer(nil, questionStore)
 
 	t.Run("it returns a json question list for a category", func(t *testing.T) {
 		req := newGetRequest(t, "/categories/1234/questions")
@@ -44,4 +44,12 @@ func TestListQuestions(t *testing.T) {
 		assertStringsEqual(t, got.Questions[0].Value, "how many nights?")
 	})
 
+}
+
+type stubQuestionStore struct {
+	questionList QuestionList
+}
+
+func (s *stubQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {
+	return QuestionList{}
 }

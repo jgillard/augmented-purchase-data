@@ -7,6 +7,6 @@ import (
 
 const statusBodyString = "OK"
 
-func (c *CategoryServer) statusHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) statusHandler(res http.ResponseWriter, req *http.Request) {
 	io.WriteString(res, statusBodyString)
 }

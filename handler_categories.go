@@ -54,14 +54,14 @@ type jsonName struct {
 	Name string `json:"name"`
 }
 
-func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request) {
 	var payload []byte
 	var err error
 
 	if strings.HasPrefix(req.URL.Path, "/categories/") && len(req.URL.Path) > len("/categories/") {
 		// GET a specific category
 		categoryID := req.URL.Path[len("/categories/"):]
-		category := c.store.GetCategory(categoryID)
+		category := c.categoryStore.GetCategory(categoryID)
 		if reflect.DeepEqual(category, CategoryGetResponse{}) {
 			res.WriteHeader(http.StatusNotFound)
 			return
@@ -73,7 +73,7 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 		}
 	} else {
 		// GET the list of categories
-		categoryList := c.store.ListCategories()
+		categoryList := c.categoryStore.ListCategories()
 		payload, err = json.Marshal(categoryList)
 		if err != nil {
 			log.Fatal(err)
@@ -84,7 +84,7 @@ func (c *CategoryServer) CategoryGetHandler(res http.ResponseWriter, req *http.R
 
 }
 
-func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request) {
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -100,7 +100,7 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 
 	categoryName := got.Name
 
-	if c.store.categoryNameExists(categoryName) {
+	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
@@ -118,19 +118,19 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 
 	parentID := *got.ParentID
 
-	if !c.store.categoryParentIDExists(parentID) && parentID != "" {
+	if !c.categoryStore.categoryParentIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
 	// checks for parent already a subcategory (depth zero indexed)
 	// we currently confine to 2 levels of categories
-	if c.store.getCategoryDepth(parentID) == 1 {
+	if c.categoryStore.getCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
-	category := c.store.AddCategory(categoryName)
+	category := c.categoryStore.AddCategory(categoryName)
 
 	payload, err := json.Marshal(category)
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *CategoryServer) CategoryPostHandler(res http.ResponseWriter, req *http.
 	res.Write(payload)
 }
 
-func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request) {
 	categoryID := req.URL.Path[len("/categories/"):]
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -160,12 +160,12 @@ func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http
 
 	categoryName := got.Name
 
-	if !c.store.categoryIDExists(categoryID) {
+	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	if c.store.categoryNameExists(categoryName) {
+	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
@@ -175,7 +175,7 @@ func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	category := c.store.RenameCategory(categoryID, categoryName)
+	category := c.categoryStore.RenameCategory(categoryID, categoryName)
 
 	res.WriteHeader(http.StatusOK)
 	payload, err := json.Marshal(category)
@@ -186,15 +186,15 @@ func (c *CategoryServer) CategoryPatchHandler(res http.ResponseWriter, req *http
 	res.Write(payload)
 }
 
-func (c *CategoryServer) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request) {
 	categoryID := req.URL.Path[len("/categories/"):]
 
-	if !c.store.categoryIDExists(categoryID) {
+	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	c.store.DeleteCategory(categoryID)
+	c.categoryStore.DeleteCategory(categoryID)
 
 	res.WriteHeader(http.StatusNoContent)
 }

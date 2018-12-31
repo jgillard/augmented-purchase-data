@@ -21,7 +21,7 @@ func TestListCategories(t *testing.T) {
 		},
 	}
 	store := &stubCategoryStore{categoryList}
-	server := NewCategoryServer(store)
+	server := NewServer(store, nil)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
 		req := newGetRequest(t, "/categories")
@@ -56,7 +56,7 @@ func TestGetCategory(t *testing.T) {
 		},
 	}
 	store := &stubCategoryStore{categoryList}
-	server := NewCategoryServer(store)
+	server := NewServer(store, nil)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
 		req := newGetRequest(t, "/categories/5678")
@@ -122,7 +122,7 @@ func TestAddCategory(t *testing.T) {
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
-	server := NewCategoryServer(store)
+	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
@@ -199,7 +199,7 @@ func TestRenameCategory(t *testing.T) {
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
-	server := NewCategoryServer(store)
+	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
@@ -274,7 +274,7 @@ func TestRemoveCategory(t *testing.T) {
 		},
 	}
 	store := &stubCategoryStore{stubCategories}
-	server := NewCategoryServer(store)
+	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {

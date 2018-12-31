@@ -4,17 +4,19 @@ import (
 	"net/http"
 )
 
-type CategoryServer struct {
-	store CategoryStore
+type Server struct {
+	categoryStore CategoryStore
+	questionStore QuestionStore
 	http.Handler
 }
 
 const jsonContentType = "application/json"
 
-func NewCategoryServer(store CategoryStore) *CategoryServer {
-	p := new(CategoryServer)
+func NewServer(cats CategoryStore, questions QuestionStore) *Server {
+	p := new(Server)
 
-	p.store = store
+	p.categoryStore = cats
+	p.questionStore = questions
 
 	router := http.NewServeMux()
 	router.Handle("/status", http.HandlerFunc(p.statusHandler))
@@ -26,7 +28,7 @@ func NewCategoryServer(store CategoryStore) *CategoryServer {
 	return p
 }
 
-func (c *CategoryServer) categoriesHandler(res http.ResponseWriter, req *http.Request) {
+func (c *Server) categoriesHandler(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Content-Type", jsonContentType)
 
