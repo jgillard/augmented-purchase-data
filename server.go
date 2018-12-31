@@ -22,11 +22,14 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 
 	router := httprouter.New()
 	router.GET("/status", p.statusHandler)
+
 	router.GET("/categories", p.CategoryGetHandler)
 	router.GET("/categories/:category", p.CategoryGetHandler)
 	router.POST("/categories", p.CategoryPostHandler)
 	router.PATCH("/categories/:category", p.CategoryPatchHandler)
 	router.DELETE("/categories/:category", p.CategoryDeleteHandler)
+
+	router.GET("/categories/:category/questions", p.QuestionListHandler)
 
 	router.NotFound = http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
 		res.WriteHeader(http.StatusNotFound)

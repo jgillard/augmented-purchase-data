@@ -51,5 +51,9 @@ type stubQuestionStore struct {
 }
 
 func (s *stubQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {
-	return QuestionList{}
+	return QuestionList{
+		Questions: []Question{
+			Question{ID: "1", Value: "how many nights?"},
+		},
+	}
 }
