@@ -20,11 +20,11 @@ type QuestionList struct {
 }
 
 type Question struct {
-	ID         string      `json:"id"`
-	Value      string      `json:"value"`
-	CategoryID string      `json:"categoryID"`
-	Type       string      `json:"type"`
-	Options    *OptionList `json:"options"`
+	ID         string     `json:"id"`
+	Value      string     `json:"value"`
+	CategoryID string     `json:"categoryID"`
+	Type       string     `json:"type"`
+	Options    OptionList `json:"options"`
 }
 
 // is this a very odd thing to do?
