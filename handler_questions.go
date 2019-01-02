@@ -67,7 +67,22 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 	}
 
 	var got QuestionPostRequest
-	UnmarshallRequest(requestBody, &got)
+	err = json.Unmarshal(requestBody, &got)
+	// json.unmarshall will not error if fields don't match
+	// however got will be an empty struct, check that below
+	if err != nil {
+		// however it does blow if options is not the correct shape, so catch that here
+		switch t := err.(type) {
+		case *json.UnmarshalTypeError:
+			if t.Field == "options" {
+				res.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		default:
+			log.Fatal(err)
+			return
+		}
+	}
 
 	question := c.questionStore.AddQuestion(categoryID, got)
 
