@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
-	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -56,36 +55,36 @@ type jsonName struct {
 	Name string `json:"name"`
 }
 
-func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	res.Header().Set("Content-Type", jsonContentType)
 
-	var payload []byte
-	var err error
-
-	if strings.HasPrefix(req.URL.Path, "/categories/") && len(req.URL.Path) > len("/categories/") {
-		// GET a specific category
-		categoryID := ps.ByName("category")
-		category := c.categoryStore.GetCategory(categoryID)
-		if reflect.DeepEqual(category, CategoryGetResponse{}) {
-			res.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		payload, err = json.Marshal(category)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		// GET the list of categories
-		categoryList := c.categoryStore.ListCategories()
-		payload, err = json.Marshal(categoryList)
-		if err != nil {
-			log.Fatal(err)
-		}
+	// GET the list of categories
+	categoryList := c.categoryStore.ListCategories()
+	payload, err := json.Marshal(categoryList)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	res.Write(payload)
+}
 
+func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	res.Header().Set("Content-Type", jsonContentType)
+
+	// GET a specific category
+	categoryID := ps.ByName("category")
+	category := c.categoryStore.GetCategory(categoryID)
+	if reflect.DeepEqual(category, CategoryGetResponse{}) {
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	payload, err := json.Marshal(category)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res.Write(payload)
 }
 
 func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
