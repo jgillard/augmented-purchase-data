@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -13,6 +14,7 @@ import (
 type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
+	questionValueExists(categoryID, questionValue string) bool
 }
 
 type QuestionList struct {
@@ -75,6 +77,7 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		switch t := err.(type) {
 		case *json.UnmarshalTypeError:
 			if t.Field == "options" {
+				fmt.Println(`"options" object is wrong shape`)
 				res.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -82,6 +85,63 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 			log.Fatal(err)
 			return
 		}
+	}
+
+	if reflect.DeepEqual(got, QuestionPostRequest{}) {
+		fmt.Println("json field(s) missing from request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if got.Value == "" {
+		fmt.Println(`"value" missing from request`)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if got.Type == "" {
+		fmt.Println(`"type" missing from request`)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if got.Type != "string" && got.Type != "number" {
+		fmt.Println(`"type" must be "string" or "number"`)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for _, opt := range got.Options {
+		if opt == "" {
+			fmt.Println(`"option" strings cannot be empty`)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	// detect duplicates in options list
+	optionCounts := make(map[string]int)
+	for _, opt := range got.Options {
+		optionCounts[opt]++
+	}
+	for _, count := range optionCounts {
+		if count > 1 {
+			fmt.Println(`"option" contains duplicate strings`)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if c.questionStore.questionValueExists(categoryID, got.Value) {
+		fmt.Println(`"value" already exists`)
+		res.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
+		fmt.Println(`"categoryID" in path doesn't exist`)
+		res.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	question := c.questionStore.AddQuestion(categoryID, got)

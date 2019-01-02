@@ -101,6 +101,60 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 func TestAddQuestion(t *testing.T) {
 
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		categoryList := CategoryList{
+			Categories: []Category{
+				Category{ID: "1234", Name: "foo", ParentID: ""},
+			},
+		}
+		questionList := QuestionList{
+			Questions: []Question{
+				Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
+				Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+					{ID: "1", Value: "brekkie"},
+				}},
+			},
+		}
+		categoryStore := &stubCategoryStore{categoryList}
+		questionStore := &stubQuestionStore{questionList}
+		server := NewServer(categoryStore, questionStore)
+
+		cases := map[string]struct {
+			path  string
+			input string
+			want  int
+		}{
+			"invalid json":             {path: "/categories/1234/questions", input: `{"foo":""}`, want: http.StatusBadRequest},
+			"value is empty":           {path: "/categories/1234/questions", input: `{"value":"", "type":"number"}`, want: http.StatusBadRequest},
+			"value is duplicate":       {path: "/categories/1234/questions", input: `{"value":"how many nights?", "type":"number"}`, want: http.StatusConflict},
+			"type is empty":            {path: "/categories/1234/questions", input: `{"value":"foo", "type":""}`, want: http.StatusBadRequest},
+			"type doesn't exist":       {path: "/categories/1234/questions", input: `{"value":"foo", "type":"foo"}`, want: http.StatusBadRequest},
+			"options is not list type": {path: "/categories/1234/questions", input: `{"value":"foo", "type":"string", "options":""}`, want: http.StatusBadRequest},
+			"options had duplicate":    {path: "/categories/1234/questions", input: `{"value":"foo", "type":"string", "options":["foo", "foo"]}`, want: http.StatusBadRequest},
+			"category doesn't exist":   {path: "/categories/5678/questions", input: `{"value":"foo", "type":"string"}`, want: http.StatusNotFound},
+		}
+
+		for name, c := range cases {
+			t.Run(name, func(t *testing.T) {
+				body := strings.NewReader(c.input)
+				req := newPostRequest(t, c.path, body)
+				res := httptest.NewRecorder()
+
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
+
+				// check the store is unmodified
+				got := questionStore.questionList
+				want := questionList
+				assertDeepEqual(t, got, want)
+			})
+		}
+	})
 
 	t.Run("add type:number question", func(t *testing.T) {
 		questionList := QuestionList{
@@ -312,4 +366,16 @@ func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest
 	s.questionList.Questions = append(s.questionList.Questions, question)
 
 	return question
+}
+
+func (s *stubQuestionStore) questionValueExists(categoryID, questionValue string) bool {
+	alreadyExists := false
+	for _, q := range s.questionList.Questions {
+		if q.CategoryID == categoryID {
+			if q.Value == questionValue {
+				alreadyExists = true
+			}
+		}
+	}
+	return alreadyExists
 }
