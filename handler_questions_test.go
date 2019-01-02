@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/rs/xid"
 )
 
 func TestListQuestionsForCategory(t *testing.T) {
@@ -14,7 +16,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 	questionList := QuestionList{
 		Questions: []Question{
 			Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
-			Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+			Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string", Options: &OptionList{
 				{ID: "1", Value: "brekkie"},
 			}},
 		},
@@ -137,6 +139,9 @@ func TestAddQuestion(t *testing.T) {
 		assertStringsEqual(t, got.Value, value)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
+		if got.Options != nil {
+			t.Fatalf("Options should not have been set, got %v", got.Options)
+		}
 
 		// check the store has been modified
 		got = questionStore.questionList.Questions[0]
@@ -162,4 +167,17 @@ func (s *stubQuestionStore) ListQuestionsForCategory(categoryID string) Question
 		}
 	}
 	return questionList
+}
+
+func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
+	question := Question{
+		ID:         xid.New().String(),
+		Value:      q.Value,
+		CategoryID: categoryID,
+		Type:       q.Type,
+	}
+
+	s.questionList.Questions = append(s.questionList.Questions, question)
+
+	return question
 }
