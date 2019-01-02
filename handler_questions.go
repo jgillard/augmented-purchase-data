@@ -17,10 +17,18 @@ type QuestionList struct {
 }
 
 type Question struct {
-	ID         string `json:"id"`
-	Value      string `json:"value"`
-	CategoryID string `json:"categoryID"`
-	Type       string `json:"type"`
+	ID         string     `json:"id"`
+	Value      string     `json:"value"`
+	CategoryID string     `json:"categoryID"`
+	Type       string     `json:"type"`
+	Options    OptionList `json:"options"`
+}
+
+type OptionList []Option
+
+type Option struct {
+	ID    string `json:"id"`
+	Value string `json:"value"`
 }
 
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
