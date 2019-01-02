@@ -17,8 +17,9 @@ type QuestionList struct {
 }
 
 type Question struct {
-	ID    string `json:"id"`
-	Value string `json:"value"`
+	ID         string `json:"id"`
+	Value      string `json:"value"`
+	CategoryID string `json:"categoryID"`
 }
 
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
