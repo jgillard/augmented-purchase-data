@@ -11,7 +11,8 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 	questionList := QuestionList{
 		Questions: []Question{
-			Question{ID: "1", Value: "how many nights?", CategoryID: "1234"},
+			Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
+			Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string"},
 		},
 	}
 	questionStore := &stubQuestionStore{questionList}
@@ -37,11 +38,16 @@ func TestListQuestionsForCategory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := questionList
+		want := QuestionList{
+			Questions: []Question{
+				Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
+			},
+		}
 
 		assertDeepEqual(t, got, want)
-		assertStringsEqual(t, got.Questions[0].ID, "1")
-		assertStringsEqual(t, got.Questions[0].Value, "how many nights?")
+		assertStringsEqual(t, got.Questions[0].ID, want.Questions[0].ID)
+		assertStringsEqual(t, got.Questions[0].Value, want.Questions[0].Value)
+		assertStringsEqual(t, got.Questions[0].Type, want.Questions[0].Type)
 	})
 
 	t.Run("it returns an empty json question list when no questions exist for category", func(t *testing.T) {
