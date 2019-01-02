@@ -60,10 +60,7 @@ func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request,
 
 	// GET the list of categories
 	categoryList := c.categoryStore.ListCategories()
-	payload, err := json.Marshal(categoryList)
-	if err != nil {
-		log.Fatal(err)
-	}
+	payload := marshallResponse(categoryList)
 
 	res.Write(payload)
 }
@@ -79,10 +76,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 		return
 	}
 
-	payload, err := json.Marshal(category)
-	if err != nil {
-		log.Fatal(err)
-	}
+	payload := marshallResponse(category)
 
 	res.Write(payload)
 }
@@ -137,10 +131,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	category := c.categoryStore.AddCategory(categoryName)
 
-	payload, err := json.Marshal(category)
-	if err != nil {
-		log.Fatal(err)
-	}
+	payload := marshallResponse(category)
 
 	res.Header().Set("Location", fmt.Sprintf("/categories/%s", category.ID))
 	res.WriteHeader(http.StatusCreated)
@@ -185,10 +176,7 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	category := c.categoryStore.RenameCategory(categoryID, categoryName)
 
 	res.WriteHeader(http.StatusOK)
-	payload, err := json.Marshal(category)
-	if err != nil {
-		log.Fatal(err)
-	}
+	payload := marshallResponse(category)
 
 	res.Write(payload)
 }
@@ -221,6 +209,14 @@ func IsValidCategoryName(name string) bool {
 	}
 
 	return isValid
+}
+
+func marshallResponse(data interface{}) []byte {
+	payload, err := json.Marshal(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return payload
 }
 
 func UnmarshallRequest(body []byte, got interface{}) {
