@@ -29,9 +29,9 @@ type Question struct {
 
 // is this a very odd thing to do?
 type QuestionPostRequest struct {
-	Value   string     `json:"value"`
-	Type    string     `json:"type"`
-	Options OptionList `json:"options"`
+	Value   string   `json:"value"`
+	Type    string   `json:"type"`
+	Options []string `json:"options"`
 }
 
 type OptionList []Option

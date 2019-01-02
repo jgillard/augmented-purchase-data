@@ -219,10 +219,7 @@ func TestAddQuestion(t *testing.T) {
 		categoryID := "1"
 		value := "which meal?"
 		optionType := "string"
-		options := OptionList{
-			Option{Value: "brekkie"},
-			Option{Value: "lunch"},
-		}
+		options := []string{"brekkie", "lunch"}
 
 		optionsJSON, err := json.Marshal(options)
 		if err != nil {
@@ -259,8 +256,8 @@ func TestAddQuestion(t *testing.T) {
 		assertNumbersEqual(t, len(got.Options), 2)
 		assertIsXid(t, got.Options[0].ID)
 		assertIsXid(t, got.Options[1].ID)
-		assertStringsEqual(t, got.Options[0].Value, options[0].Value)
-		assertStringsEqual(t, got.Options[1].Value, options[1].Value)
+		assertStringsEqual(t, got.Options[0].Value, options[0])
+		assertStringsEqual(t, got.Options[1].Value, options[1])
 
 		// check the store has been modified
 		got = questionStore.questionList.Questions[0]
@@ -271,8 +268,8 @@ func TestAddQuestion(t *testing.T) {
 		assertNumbersEqual(t, len(got.Options), 2)
 		assertIsXid(t, got.Options[0].ID)
 		assertIsXid(t, got.Options[1].ID)
-		assertStringsEqual(t, got.Options[0].Value, options[0].Value)
-		assertStringsEqual(t, got.Options[1].Value, options[1].Value)
+		assertStringsEqual(t, got.Options[0].Value, options[0])
+		assertStringsEqual(t, got.Options[1].Value, options[1])
 
 		// get ID from store and check that's in returned Location header
 		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s/questions/%s", categoryID, got.ID))
@@ -303,10 +300,10 @@ func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest
 
 	if q.Type == "string" {
 		question.Options = OptionList{}
-		for _, o := range q.Options {
+		for _, value := range q.Options {
 			option := Option{
 				ID:    xid.New().String(),
-				Value: o.Value,
+				Value: value,
 			}
 			question.Options = append(question.Options, option)
 		}
