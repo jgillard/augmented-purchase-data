@@ -56,7 +56,7 @@ type jsonName struct {
 	Name string `json:"name"`
 }
 
-func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	res.Header().Set("Content-Type", jsonContentType)
 
 	var payload []byte
@@ -64,7 +64,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if strings.HasPrefix(req.URL.Path, "/categories/") && len(req.URL.Path) > len("/categories/") {
 		// GET a specific category
-		categoryID := req.URL.Path[len("/categories/"):]
+		categoryID := ps.ByName("category")
 		category := c.categoryStore.GetCategory(categoryID)
 		if reflect.DeepEqual(category, CategoryGetResponse{}) {
 			res.WriteHeader(http.StatusNotFound)
@@ -148,10 +148,10 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	res.Header().Set("Content-Type", jsonContentType)
 
-	categoryID := req.URL.Path[len("/categories/"):]
+	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -194,10 +194,10 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	res.Write(payload)
 }
 
-func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	res.Header().Set("Content-Type", jsonContentType)
 
-	categoryID := req.URL.Path[len("/categories/"):]
+	categoryID := ps.ByName("category")
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
