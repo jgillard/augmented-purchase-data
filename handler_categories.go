@@ -71,6 +71,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 	// GET a specific category
 	categoryID := ps.ByName("category")
 	category := c.categoryStore.GetCategory(categoryID)
+
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
 		res.WriteHeader(http.StatusNotFound)
 		return
@@ -92,12 +93,11 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	var got CategoryPostRequest
 	UnmarshallRequest(requestBody, &got)
 
-	if reflect.DeepEqual(got, CategoryPostRequest{}) {
-		res.WriteHeader(http.StatusBadRequest)
+	categoryName := got.Name
+
+	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
 		return
 	}
-
-	categoryName := got.Name
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
@@ -151,12 +151,11 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	var got jsonName
 	UnmarshallRequest(requestBody, &got)
 
-	if got == (jsonName{}) {
-		res.WriteHeader(http.StatusBadRequest)
+	categoryName := got.Name
+
+	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
 		return
 	}
-
-	categoryName := got.Name
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
@@ -175,9 +174,9 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 
 	category := c.categoryStore.RenameCategory(categoryID, categoryName)
 
-	res.WriteHeader(http.StatusOK)
 	payload := marshallResponse(category)
 
+	res.WriteHeader(http.StatusOK)
 	res.Write(payload)
 }
 

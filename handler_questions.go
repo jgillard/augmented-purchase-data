@@ -48,19 +48,18 @@ type Option struct {
 	Value string `json:"value"`
 }
 
+var possibleOptionTypes = []string{"string", "number"}
+
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	res.Header().Set("Content-Type", jsonContentType)
 
 	categoryID := ps.ByName("category")
 
 	questionList := c.questionStore.ListQuestionsForCategory(categoryID)
-	payload, err := json.Marshal(questionList)
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	payload := marshallResponse(questionList)
 
 	res.Write(payload)
-
 }
 
 func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
@@ -92,49 +91,30 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		}
 	}
 
-	if reflect.DeepEqual(got, QuestionPostRequest{}) {
-		fmt.Println("json field(s) missing from request")
-		res.WriteHeader(http.StatusBadRequest)
+	if !ensureJSONFieldsPresent(res, got, QuestionPostRequest{}) {
 		return
 	}
 
-	if got.Value == "" {
-		fmt.Println(`"value" missing from request`)
-		res.WriteHeader(http.StatusBadRequest)
+	if !ensureStringFieldNonEmpty(res, "value", got.Value) {
 		return
 	}
 
-	if got.Type == "" {
-		fmt.Println(`"type" missing from request`)
-		res.WriteHeader(http.StatusBadRequest)
+	if !ensureStringFieldNonEmpty(res, "type", got.Type) {
 		return
 	}
 
-	if got.Type != "string" && got.Type != "number" {
-		fmt.Println(`"type" must be "string" or "number"`)
-		res.WriteHeader(http.StatusBadRequest)
+	if !ensureStringFieldValue(res, "type", got.Type, possibleOptionTypes) {
 		return
 	}
 
 	for _, opt := range got.Options {
-		if opt == "" {
-			fmt.Println(`"option" strings cannot be empty`)
-			res.WriteHeader(http.StatusBadRequest)
+		if !ensureStringFieldNonEmpty(res, "options", opt) {
 			return
 		}
 	}
 
-	// detect duplicates in options list
-	optionCounts := make(map[string]int)
-	for _, opt := range got.Options {
-		optionCounts[opt]++
-	}
-	for _, count := range optionCounts {
-		if count > 1 {
-			fmt.Println(`"option" contains duplicate strings`)
-			res.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	if !ensureNoDuplicates(res, "options", got.Options) {
+		return
 	}
 
 	if c.questionStore.questionValueExists(categoryID, got.Value) {
@@ -156,7 +136,6 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 	res.Header().Set("Location", fmt.Sprintf("/categories/%s/questions/%s", categoryID, question.ID))
 	res.WriteHeader(http.StatusCreated)
 	res.Write(payload)
-
 }
 
 func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
@@ -173,12 +152,11 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 	var got jsonName
 	UnmarshallRequest(requestBody, &got)
 
-	if got == (jsonName{}) {
-		res.WriteHeader(http.StatusBadRequest)
+	questionValue := got.Name
+
+	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
 		return
 	}
-
-	questionValue := got.Name
 
 	if !IsValidQuestionName(questionValue) {
 		fmt.Println(`"name" is not a valid string`)
@@ -211,11 +189,10 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 	}
 
 	question := c.questionStore.RenameQuestion(questionID, questionValue)
+	payload := marshallResponse(question)
 
 	res.WriteHeader(http.StatusOK)
-	payload := marshallResponse(question)
 	res.Write(payload)
-
 }
 
 func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
@@ -245,7 +222,6 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 	c.questionStore.DeleteQuestion(questionID)
 
 	res.WriteHeader(http.StatusNoContent)
-
 }
 
 func IsValidQuestionName(name string) bool {
@@ -262,4 +238,59 @@ func IsValidQuestionName(name string) bool {
 	}
 
 	return isValid
+}
+
+func ensureJSONFieldsPresent(res http.ResponseWriter, got, desired interface{}) bool {
+	if reflect.DeepEqual(got, desired) {
+		fmt.Println("json field(s) missing from request")
+		res.WriteHeader(http.StatusBadRequest)
+		return false
+	}
+	return true
+}
+
+func ensureStringFieldNonEmpty(res http.ResponseWriter, key, value string) bool {
+	if value == "" {
+		fmt.Println(fmt.Sprintf(`"%s" missing from request`, key))
+		res.WriteHeader(http.StatusBadRequest)
+		return false
+	}
+	return true
+}
+
+func ensureStringFieldValue(res http.ResponseWriter, key, value string, possibleOptionTypes []string) bool {
+	isValid := false
+
+	for _, possible := range possibleOptionTypes {
+		if value == possible {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		fmt.Printf(`"%s" must be one of %v`, key, possibleOptionTypes)
+		res.WriteHeader(http.StatusBadRequest)
+	}
+
+	return isValid
+}
+
+func ensureNoDuplicates(res http.ResponseWriter, key string, strings []string) bool {
+	noDuplicates := true
+
+	counts := make(map[string]int)
+	for _, str := range strings {
+		counts[str]++
+	}
+
+	for _, count := range counts {
+		if count > 1 {
+			fmt.Printf(`"%s" contains duplicate strings`, key)
+			res.WriteHeader(http.StatusBadRequest)
+			noDuplicates = false
+		}
+	}
+
+	return noDuplicates
 }

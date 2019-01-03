@@ -36,9 +36,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallQuestionListFromBody(t, result.Body)
-
 		want := questionList.Questions[0]
-
 		assertDeepEqual(t, got.Questions[0], want)
 	})
 
@@ -53,9 +51,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallQuestionListFromBody(t, result.Body)
-
 		want := questionList.Questions[1]
-
 		assertDeepEqual(t, got.Questions[0], want)
 	})
 
@@ -70,10 +66,9 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
 		got := unmarshallQuestionListFromBody(t, result.Body)
-
-		assertNumbersEqual(t, len(got.Questions), 0)
+		want := len(got.Questions)
+		assertNumbersEqual(t, want, 0)
 	})
-
 }
 
 func TestAddQuestion(t *testing.T) {
