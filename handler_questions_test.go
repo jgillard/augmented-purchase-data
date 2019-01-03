@@ -34,15 +34,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got QuestionList
-
-		err := json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionListFromBody(t, result.Body)
 
 		want := questionList.Questions[0]
 
@@ -59,15 +51,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got QuestionList
-
-		err := json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionListFromBody(t, result.Body)
 
 		want := questionList.Questions[1]
 
@@ -84,15 +68,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got QuestionList
-
-		err := json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionListFromBody(t, result.Body)
 
 		assertNumbersEqual(t, len(got.Questions), 0)
 	})
@@ -179,15 +155,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got Question
-
-		err := json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionFromBody(t, result.Body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -233,15 +201,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got Question
-
-		err := json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionFromBody(t, result.Body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -292,15 +252,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 
-		bodyBytes := readBodyBytes(t, result.Body)
-
-		var got Question
-
-		err = json.Unmarshal(bodyBytes, &got)
-		// check for syntax error or type mismatch
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := unmarshallQuestionFromBody(t, result.Body)
 
 		// check the response
 		assertIsXid(t, got.ID)

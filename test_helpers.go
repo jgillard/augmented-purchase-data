@@ -134,3 +134,31 @@ func unmarshallCategoryGetResponseFromBody(t *testing.T, b io.ReadCloser) Catego
 
 	return got
 }
+
+func unmarshallQuestionListFromBody(t *testing.T, b io.ReadCloser) QuestionList {
+	bodyBytes := readBodyBytes(t, b)
+
+	var got QuestionList
+
+	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
+}
+
+func unmarshallQuestionFromBody(t *testing.T, b io.ReadCloser) Question {
+	bodyBytes := readBodyBytes(t, b)
+
+	var got Question
+
+	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
+}
