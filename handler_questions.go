@@ -217,6 +217,32 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 
 }
 
+func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	res.Header().Set("Content-Type", jsonContentType)
+
+	categoryID := ps.ByName("category")
+	questionID := ps.ByName("question")
+
+	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
+		fmt.Println(`"categoryID" in path doesn't exist`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if !c.questionStore.questionIDExists(questionID) {
+		fmt.Println(`"questionID" in path doesn't exist`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if !c.questionStore.questionBelongsToCategory(questionID, categoryID) {
+		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+}
+
 func IsValidQuestionName(name string) bool {
 	isValid := true
 
