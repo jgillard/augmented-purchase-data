@@ -417,6 +417,23 @@ func TestRemoveQuestion(t *testing.T) {
 		}
 	})
 
+	t.Run("test success response & effect", func(t *testing.T) {
+		req := newDeleteRequest(t, "/categories/1234/questions/1")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		// check response
+		assertStatusCode(t, result.StatusCode, http.StatusNoContent)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyEmpty(t, result.Body)
+
+		// check store is updated
+		got := len(questionStore.questionList.Questions)
+		want := 0
+		assertNumbersEqual(t, got, want)
+	})
 }
 
 type stubQuestionStore struct {
