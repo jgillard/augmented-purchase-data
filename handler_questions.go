@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"regexp"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -14,7 +15,9 @@ import (
 type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
+	questionIDExists(questionID string) bool
 	questionValueExists(categoryID, questionValue string) bool
+	questionBelongsToCategory(questionID, categoryID string) bool
 }
 
 type QuestionList struct {
@@ -152,4 +155,73 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 	res.WriteHeader(http.StatusCreated)
 	res.Write(payload)
 
+}
+
+func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	res.Header().Set("Content-Type", jsonContentType)
+
+	categoryID := ps.ByName("category")
+	questionID := ps.ByName("question")
+
+	requestBody, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var got jsonName
+	UnmarshallRequest(requestBody, &got)
+
+	if got == (jsonName{}) {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	questionValue := got.Name
+
+	if !IsValidQuestionName(questionValue) {
+		fmt.Println(`"name" is not a valid string`)
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
+		fmt.Println(`"categoryID" in path doesn't exist`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if !c.questionStore.questionIDExists(questionID) {
+		fmt.Println(`"questionID" in path doesn't exist`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if !c.questionStore.questionBelongsToCategory(questionID, categoryID) {
+		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
+		res.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if c.questionStore.questionValueExists(categoryID, got.Name) {
+		fmt.Println(`"name" already exists`)
+		res.WriteHeader(http.StatusConflict)
+		return
+	}
+
+}
+
+func IsValidQuestionName(name string) bool {
+	isValid := true
+
+	if len(name) == 0 || len(name) > 32 {
+		isValid = false
+	}
+
+	questionRegex := `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
+	isLetterOrWhitespace := regexp.MustCompile(questionRegex).MatchString
+	if !isLetterOrWhitespace(name) {
+		isValid = false
+	}
+
+	return isValid
 }

@@ -203,7 +203,8 @@ func IsValidCategoryName(name string) bool {
 		isValid = false
 	}
 
-	isLetterOrWhitespace := regexp.MustCompile(`^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`).MatchString
+	stringRegex := `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
+	isLetterOrWhitespace := regexp.MustCompile(stringRegex).MatchString
 	if !isLetterOrWhitespace(name) {
 		isValid = false
 	}

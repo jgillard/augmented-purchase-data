@@ -332,14 +332,22 @@ func TestAddQuestion(t *testing.T) {
 
 func TestRenameQuestion(t *testing.T) {
 
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "foo", ParentID: ""},
+			Category{ID: "2345", Name: "bar", ParentID: ""},
+		},
+	}
 	questionList := QuestionList{
 		Questions: []Question{
 			Question{ID: "1", Value: "how many nuggets?", CategoryID: "1234", Type: "number"},
 			Question{ID: "2", Value: "how much nougat?", CategoryID: "1234", Type: "number"},
+			Question{ID: "3", Value: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
+	categoryStore := &stubCategoryStore{categoryList}
 	questionStore := &stubQuestionStore{questionList}
-	server := NewServer(nil, questionStore)
+	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
@@ -347,11 +355,12 @@ func TestRenameQuestion(t *testing.T) {
 			input string
 			want  int
 		}{
-			"invalid json":           {path: "/categories/1234/questions/1", input: `{"foo":""}`, want: http.StatusBadRequest},
-			"invalid name":           {path: "/categories/1234/questions/1", input: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
-			"duplicate name":         {path: "/categories/1234/questions/1", input: `{"name":"how much nougat?"}`, want: http.StatusConflict},
-			"category doesn't exist": {path: "/categories/5678/questions/1", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
-			"ID not found":           {path: "/categories/1234/questions/3", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"invalid json":                         {path: "/categories/1234/questions/1", input: `{"foo":""}`, want: http.StatusBadRequest},
+			"invalid name":                         {path: "/categories/1234/questions/1", input: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
+			"duplicate name":                       {path: "/categories/1234/questions/1", input: `{"name":"how much nougat?"}`, want: http.StatusConflict},
+			"category doesn't exist":               {path: "/categories/5678/questions/1", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"ID not found":                         {path: "/categories/1234/questions/4", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"question does not belong to category": {path: "/categories/1234/questions/3", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
 		}
 
 		for name, c := range cases {
@@ -416,6 +425,16 @@ func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest
 	return question
 }
 
+func (s *stubQuestionStore) questionIDExists(questionID string) bool {
+	exists := false
+	for _, q := range s.questionList.Questions {
+		if q.ID == questionID {
+			exists = true
+		}
+	}
+	return exists
+}
+
 func (s *stubQuestionStore) questionValueExists(categoryID, questionValue string) bool {
 	alreadyExists := false
 	for _, q := range s.questionList.Questions {
@@ -426,4 +445,16 @@ func (s *stubQuestionStore) questionValueExists(categoryID, questionValue string
 		}
 	}
 	return alreadyExists
+}
+
+func (s *stubQuestionStore) questionBelongsToCategory(questionID, categoryID string) bool {
+	belongsToCategory := true
+	for _, q := range s.questionList.Questions {
+		if q.ID == questionID {
+			if q.CategoryID != categoryID {
+				belongsToCategory = false
+			}
+		}
+	}
+	return belongsToCategory
 }

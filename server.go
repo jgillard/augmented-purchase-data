@@ -31,6 +31,7 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 
 	router.GET("/categories/:category/questions", p.QuestionListHandler)
 	router.POST("/categories/:category/questions", p.QuestionPostHandler)
+	router.PATCH("/categories/:category/questions/:question", p.QuestionPatchHandler)
 
 	router.NotFound = http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
