@@ -488,6 +488,17 @@ func (s *stubQuestionStore) RenameQuestion(questionID, questionValue string) Que
 	return s.questionList.Questions[index]
 }
 
+func (s *stubQuestionStore) DeleteQuestion(questionID string) {
+	index := 0
+	for i, q := range s.questionList.Questions {
+		if q.ID == questionID {
+			index = i
+			break
+		}
+	}
+	s.questionList.Questions = append(s.questionList.Questions[:index], s.questionList.Questions[index+1:]...)
+}
+
 func (s *stubQuestionStore) questionIDExists(questionID string) bool {
 	exists := false
 	for _, q := range s.questionList.Questions {

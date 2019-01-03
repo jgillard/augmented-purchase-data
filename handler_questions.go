@@ -16,6 +16,7 @@ type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
 	RenameQuestion(questionID, questionValue string) Question
+	DeleteQuestion(questionID string)
 	questionIDExists(questionID string) bool
 	questionValueExists(categoryID, questionValue string) bool
 	questionBelongsToCategory(questionID, categoryID string) bool
@@ -240,6 +241,10 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	c.questionStore.DeleteQuestion(questionID)
+
+	res.WriteHeader(http.StatusNoContent)
 
 }
 
