@@ -15,10 +15,10 @@ import (
 type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
-	RenameQuestion(questionID, questionValue string) Question
+	RenameQuestion(questionID, questionTitle string) Question
 	DeleteQuestion(questionID string)
 	questionIDExists(questionID string) bool
-	questionValueExists(categoryID, questionValue string) bool
+	questionTitleExists(categoryID, questionTitle string) bool
 	questionBelongsToCategory(questionID, categoryID string) bool
 }
 
@@ -28,7 +28,7 @@ type QuestionList struct {
 
 type Question struct {
 	ID         string     `json:"id"`
-	Value      string     `json:"value"`
+	Title      string     `json:"title"`
 	CategoryID string     `json:"categoryID"`
 	Type       string     `json:"type"`
 	Options    OptionList `json:"options"`
@@ -36,7 +36,7 @@ type Question struct {
 
 // is this a very odd thing to do?
 type QuestionPostRequest struct {
-	Value   string   `json:"value"`
+	Title   string   `json:"title"`
 	Type    string   `json:"type"`
 	Options []string `json:"options"`
 }
@@ -45,7 +45,11 @@ type OptionList []Option
 
 type Option struct {
 	ID    string `json:"id"`
-	Value string `json:"value"`
+	Title string `json:"title"`
+}
+
+type jsonTitle struct {
+	Title string `json:"title"`
 }
 
 var possibleOptionTypes = []string{"string", "number"}
@@ -95,7 +99,7 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	if !ensureStringFieldNonEmpty(res, "value", got.Value) {
+	if !ensureStringFieldNonEmpty(res, "title", got.Title) {
 		return
 	}
 
@@ -103,7 +107,7 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	if !ensureStringFieldValue(res, "type", got.Type, possibleOptionTypes) {
+	if !ensureStringFieldTitle(res, "type", got.Type, possibleOptionTypes) {
 		return
 	}
 
@@ -117,8 +121,8 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	if c.questionStore.questionValueExists(categoryID, got.Value) {
-		fmt.Println(`"value" already exists`)
+	if c.questionStore.questionTitleExists(categoryID, got.Title) {
+		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
@@ -149,17 +153,17 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 		log.Fatal(err)
 	}
 
-	var got jsonName
+	var got jsonTitle
 	UnmarshallRequest(requestBody, &got)
 
-	questionValue := got.Name
+	questionTitle := got.Title
 
-	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
+	if !ensureJSONFieldsPresent(res, got, jsonTitle{}) {
 		return
 	}
 
-	if !IsValidQuestionName(questionValue) {
-		fmt.Println(`"name" is not a valid string`)
+	if !IsValidQuestionTitle(questionTitle) {
+		fmt.Println(`"title" is not a valid string`)
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
@@ -182,13 +186,13 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if c.questionStore.questionValueExists(categoryID, got.Name) {
-		fmt.Println(`"name" already exists`)
+	if c.questionStore.questionTitleExists(categoryID, got.Title) {
+		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
 
-	question := c.questionStore.RenameQuestion(questionID, questionValue)
+	question := c.questionStore.RenameQuestion(questionID, questionTitle)
 	payload := marshallResponse(question)
 
 	res.WriteHeader(http.StatusOK)
@@ -224,16 +228,16 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 	res.WriteHeader(http.StatusNoContent)
 }
 
-func IsValidQuestionName(name string) bool {
+func IsValidQuestionTitle(title string) bool {
 	isValid := true
 
-	if len(name) == 0 || len(name) > 32 {
+	if len(title) == 0 || len(title) > 32 {
 		isValid = false
 	}
 
 	questionRegex := `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
 	isLetterOrWhitespace := regexp.MustCompile(questionRegex).MatchString
-	if !isLetterOrWhitespace(name) {
+	if !isLetterOrWhitespace(title) {
 		isValid = false
 	}
 
@@ -249,8 +253,8 @@ func ensureJSONFieldsPresent(res http.ResponseWriter, got, desired interface{}) 
 	return true
 }
 
-func ensureStringFieldNonEmpty(res http.ResponseWriter, key, value string) bool {
-	if value == "" {
+func ensureStringFieldNonEmpty(res http.ResponseWriter, key, title string) bool {
+	if title == "" {
 		fmt.Println(fmt.Sprintf(`"%s" missing from request`, key))
 		res.WriteHeader(http.StatusBadRequest)
 		return false
@@ -258,11 +262,11 @@ func ensureStringFieldNonEmpty(res http.ResponseWriter, key, value string) bool 
 	return true
 }
 
-func ensureStringFieldValue(res http.ResponseWriter, key, value string, possibleOptionTypes []string) bool {
+func ensureStringFieldTitle(res http.ResponseWriter, key, title string, possibleOptionTypes []string) bool {
 	isValid := false
 
 	for _, possible := range possibleOptionTypes {
-		if value == possible {
+		if title == possible {
 			isValid = true
 			break
 		}

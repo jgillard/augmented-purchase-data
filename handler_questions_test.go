@@ -16,9 +16,9 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 	questionList := QuestionList{
 		Questions: []Question{
-			Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
-			Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
-				{ID: "1", Value: "brekkie"},
+			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+			Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+				{ID: "1", Title: "brekkie"},
 			}},
 		},
 	}
@@ -81,9 +81,9 @@ func TestAddQuestion(t *testing.T) {
 		}
 		questionList := QuestionList{
 			Questions: []Question{
-				Question{ID: "1", Value: "how many nights?", CategoryID: "1234", Type: "number"},
-				Question{ID: "2", Value: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
-					{ID: "1", Value: "brekkie"},
+				Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+				Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+					{ID: "1", Title: "brekkie"},
 				}},
 			},
 		}
@@ -97,13 +97,13 @@ func TestAddQuestion(t *testing.T) {
 			want  int
 		}{
 			"invalid json":             {path: "/categories/1234/questions", input: `{"foo":""}`, want: http.StatusBadRequest},
-			"value is empty":           {path: "/categories/1234/questions", input: `{"value":"", "type":"number"}`, want: http.StatusBadRequest},
-			"value is duplicate":       {path: "/categories/1234/questions", input: `{"value":"how many nights?", "type":"number"}`, want: http.StatusConflict},
-			"type is empty":            {path: "/categories/1234/questions", input: `{"value":"foo", "type":""}`, want: http.StatusBadRequest},
-			"type doesn't exist":       {path: "/categories/1234/questions", input: `{"value":"foo", "type":"foo"}`, want: http.StatusBadRequest},
-			"options is not list type": {path: "/categories/1234/questions", input: `{"value":"foo", "type":"string", "options":""}`, want: http.StatusBadRequest},
-			"options had duplicate":    {path: "/categories/1234/questions", input: `{"value":"foo", "type":"string", "options":["foo", "foo"]}`, want: http.StatusBadRequest},
-			"category doesn't exist":   {path: "/categories/5678/questions", input: `{"value":"foo", "type":"string"}`, want: http.StatusNotFound},
+			"title is empty":           {path: "/categories/1234/questions", input: `{"title":"", "type":"number"}`, want: http.StatusBadRequest},
+			"title is duplicate":       {path: "/categories/1234/questions", input: `{"title":"how many nights?", "type":"number"}`, want: http.StatusConflict},
+			"type is empty":            {path: "/categories/1234/questions", input: `{"title":"foo", "type":""}`, want: http.StatusBadRequest},
+			"type doesn't exist":       {path: "/categories/1234/questions", input: `{"title":"foo", "type":"foo"}`, want: http.StatusBadRequest},
+			"options is not list type": {path: "/categories/1234/questions", input: `{"title":"foo", "type":"string", "options":""}`, want: http.StatusBadRequest},
+			"options had duplicate":    {path: "/categories/1234/questions", input: `{"title":"foo", "type":"string", "options":["foo", "foo"]}`, want: http.StatusBadRequest},
+			"category doesn't exist":   {path: "/categories/5678/questions", input: `{"title":"foo", "type":"string"}`, want: http.StatusNotFound},
 		}
 
 		for name, c := range cases {
@@ -136,10 +136,10 @@ func TestAddQuestion(t *testing.T) {
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
-		value := "how many nights?"
+		title := "how many nights?"
 		optionType := "number"
 
-		jsonReq := fmt.Sprintf(`{"value":"%s", "type":"%s"}`, value, optionType)
+		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s"}`, title, optionType)
 		body := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
 		req := newPostRequest(t, path, body)
@@ -155,7 +155,7 @@ func TestAddQuestion(t *testing.T) {
 
 		// check the response
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		// Options should not be present in response
@@ -166,7 +166,7 @@ func TestAddQuestion(t *testing.T) {
 		// check the store has been modified
 		got = questionStore.questionList.Questions[0]
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 
@@ -182,10 +182,10 @@ func TestAddQuestion(t *testing.T) {
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
-		value := "which meal?"
+		title := "which meal?"
 		optionType := "string"
 
-		jsonReq := fmt.Sprintf(`{"value":"%s", "type":"%s"}`, value, optionType)
+		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s"}`, title, optionType)
 		body := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
 		req := newPostRequest(t, path, body)
@@ -201,7 +201,7 @@ func TestAddQuestion(t *testing.T) {
 
 		// check the response
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		// Options should be an empty list in response
@@ -210,7 +210,7 @@ func TestAddQuestion(t *testing.T) {
 		// check the store has been modified
 		got = questionStore.questionList.Questions[0]
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		assertDeepEqual(t, got.Options, OptionList{})
@@ -227,7 +227,7 @@ func TestAddQuestion(t *testing.T) {
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
-		value := "which meal?"
+		title := "which meal?"
 		optionType := "string"
 		options := []string{"brekkie", "lunch"}
 
@@ -235,7 +235,7 @@ func TestAddQuestion(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		jsonReq := fmt.Sprintf(`{"value":"%s", "type":"%s", "options":%s}`, value, optionType, optionsJSON)
+		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s", "options":%s}`, title, optionType, optionsJSON)
 
 		body := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
@@ -252,26 +252,26 @@ func TestAddQuestion(t *testing.T) {
 
 		// check the response
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		assertNumbersEqual(t, len(got.Options), 2)
 		assertIsXid(t, got.Options[0].ID)
 		assertIsXid(t, got.Options[1].ID)
-		assertStringsEqual(t, got.Options[0].Value, options[0])
-		assertStringsEqual(t, got.Options[1].Value, options[1])
+		assertStringsEqual(t, got.Options[0].Title, options[0])
+		assertStringsEqual(t, got.Options[1].Title, options[1])
 
 		// check the store has been modified
 		got = questionStore.questionList.Questions[0]
 		assertIsXid(t, got.ID)
-		assertStringsEqual(t, got.Value, value)
+		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		assertNumbersEqual(t, len(got.Options), 2)
 		assertIsXid(t, got.Options[0].ID)
 		assertIsXid(t, got.Options[1].ID)
-		assertStringsEqual(t, got.Options[0].Value, options[0])
-		assertStringsEqual(t, got.Options[1].Value, options[1])
+		assertStringsEqual(t, got.Options[0].Title, options[0])
+		assertStringsEqual(t, got.Options[1].Title, options[1])
 
 		// get ID from store and check that's in returned Location header
 		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s/questions/%s", categoryID, got.ID))
@@ -288,9 +288,9 @@ func TestRenameQuestion(t *testing.T) {
 	}
 	questionList := QuestionList{
 		Questions: []Question{
-			Question{ID: "1", Value: "how many nuggets?", CategoryID: "1234", Type: "number"},
-			Question{ID: "2", Value: "how much nougat?", CategoryID: "1234", Type: "number"},
-			Question{ID: "3", Value: "how much nougat?", CategoryID: "2345", Type: "number"},
+			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
+			Question{ID: "2", Title: "how much nougat?", CategoryID: "1234", Type: "number"},
+			Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
 	categoryStore := &stubCategoryStore{categoryList}
@@ -304,11 +304,11 @@ func TestRenameQuestion(t *testing.T) {
 			want  int
 		}{
 			"invalid json":                         {path: "/categories/1234/questions/1", input: `{"foo":""}`, want: http.StatusBadRequest},
-			"invalid name":                         {path: "/categories/1234/questions/1", input: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
-			"duplicate name":                       {path: "/categories/1234/questions/1", input: `{"name":"how much nougat?"}`, want: http.StatusConflict},
-			"category doesn't exist":               {path: "/categories/5678/questions/1", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
-			"ID not found":                         {path: "/categories/1234/questions/4", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
-			"question does not belong to category": {path: "/categories/1234/questions/3", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"invalid title":                        {path: "/categories/1234/questions/1", input: `{"title":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
+			"duplicate title":                      {path: "/categories/1234/questions/1", input: `{"title":"how much nougat?"}`, want: http.StatusConflict},
+			"category doesn't exist":               {path: "/categories/5678/questions/1", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
+			"ID not found":                         {path: "/categories/1234/questions/4", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
+			"question does not belong to category": {path: "/categories/1234/questions/3", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
 		}
 
 		for name, c := range cases {
@@ -334,8 +334,8 @@ func TestRenameQuestion(t *testing.T) {
 	})
 
 	t.Run("test success responses & effect", func(t *testing.T) {
-		newQuestionName := "whattup world?"
-		requestBody, err := json.Marshal(jsonName{Name: newQuestionName})
+		newQuestionTitle := "whattup world?"
+		requestBody, err := json.Marshal(jsonTitle{Title: newQuestionTitle})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -351,15 +351,15 @@ func TestRenameQuestion(t *testing.T) {
 
 		responseBody := unmarshallQuestionFromBody(t, result.Body)
 
-		renamedQuestion := Question{ID: "1", Value: newQuestionName, CategoryID: "1234", Type: "number"}
+		renamedQuestion := Question{ID: "1", Title: newQuestionTitle, CategoryID: "1234", Type: "number"}
 		assertStringsEqual(t, responseBody.ID, renamedQuestion.ID)
-		assertStringsEqual(t, responseBody.Value, renamedQuestion.Value)
+		assertStringsEqual(t, responseBody.Title, renamedQuestion.Title)
 		assertStringsEqual(t, responseBody.CategoryID, renamedQuestion.CategoryID)
 		assertStringsEqual(t, responseBody.Type, renamedQuestion.Type)
 
 		// check the store is updated
-		got := questionStore.questionList.Questions[0].Value
-		want := renamedQuestion.Value
+		got := questionStore.questionList.Questions[0].Title
+		want := renamedQuestion.Title
 		assertStringsEqual(t, got, want)
 	})
 }
@@ -374,7 +374,7 @@ func TestRemoveQuestion(t *testing.T) {
 	}
 	questionList := QuestionList{
 		Questions: []Question{
-			Question{ID: "1", Value: "how many nuggets?", CategoryID: "1234", Type: "number"},
+			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
 		},
 	}
 	categoryStore := &stubCategoryStore{categoryList}
@@ -448,17 +448,17 @@ func (s *stubQuestionStore) ListQuestionsForCategory(categoryID string) Question
 func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
 	question := Question{
 		ID:         xid.New().String(),
-		Value:      q.Value,
+		Title:      q.Title,
 		CategoryID: categoryID,
 		Type:       q.Type,
 	}
 
 	if q.Type == "string" {
 		question.Options = OptionList{}
-		for _, value := range q.Options {
+		for _, title := range q.Options {
 			option := Option{
 				ID:    xid.New().String(),
-				Value: value,
+				Title: title,
 			}
 			question.Options = append(question.Options, option)
 		}
@@ -469,13 +469,13 @@ func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest
 	return question
 }
 
-func (s *stubQuestionStore) RenameQuestion(questionID, questionValue string) Question {
+func (s *stubQuestionStore) RenameQuestion(questionID, questionTitle string) Question {
 	index := 0
 
 	for i, q := range s.questionList.Questions {
 		if q.ID == questionID {
 			index = i
-			s.questionList.Questions[index].Value = questionValue
+			s.questionList.Questions[index].Title = questionTitle
 			break
 		}
 	}
@@ -504,11 +504,11 @@ func (s *stubQuestionStore) questionIDExists(questionID string) bool {
 	return exists
 }
 
-func (s *stubQuestionStore) questionValueExists(categoryID, questionValue string) bool {
+func (s *stubQuestionStore) questionTitleExists(categoryID, questionTitle string) bool {
 	alreadyExists := false
 	for _, q := range s.questionList.Questions {
 		if q.CategoryID == categoryID {
-			if q.Value == questionValue {
+			if q.Title == questionTitle {
 				alreadyExists = true
 			}
 		}
