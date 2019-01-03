@@ -369,6 +369,56 @@ func TestRenameQuestion(t *testing.T) {
 	})
 }
 
+func TestRemoveQuestion(t *testing.T) {
+
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "foo", ParentID: ""},
+			Category{ID: "2345", Name: "bar", ParentID: ""},
+		},
+	}
+	questionList := QuestionList{
+		Questions: []Question{
+			Question{ID: "1", Value: "how many nuggets?", CategoryID: "1234", Type: "number"},
+		},
+	}
+	categoryStore := &stubCategoryStore{categoryList}
+	questionStore := &stubQuestionStore{questionList}
+	server := NewServer(categoryStore, questionStore)
+
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := map[string]struct {
+			path string
+			want int
+		}{
+			"category doesn't exist":              {path: "/categories/5678/questions/2", want: http.StatusNotFound},
+			"question doesn't exist":              {path: "/categories/1234/questions/2", want: http.StatusNotFound},
+			"question doesn't belong to category": {path: "/categories/2345/questions/1", want: http.StatusNotFound},
+		}
+
+		for name, c := range cases {
+			t.Run(name, func(t *testing.T) {
+				req := newDeleteRequest(t, c.path)
+				res := httptest.NewRecorder()
+
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
+
+				// check the store is unmodified
+				got := questionStore.questionList
+				want := questionList
+				assertDeepEqual(t, got, want)
+			})
+		}
+	})
+
+}
+
 type stubQuestionStore struct {
 	questionList QuestionList
 }
