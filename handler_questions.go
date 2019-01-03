@@ -15,6 +15,7 @@ import (
 type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
+	RenameQuestion(questionID, questionValue string) Question
 	questionIDExists(questionID string) bool
 	questionValueExists(categoryID, questionValue string) bool
 	questionBelongsToCategory(questionID, categoryID string) bool
@@ -207,6 +208,12 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 		res.WriteHeader(http.StatusConflict)
 		return
 	}
+
+	question := c.questionStore.RenameQuestion(questionID, questionValue)
+
+	res.WriteHeader(http.StatusOK)
+	payload := marshallResponse(question)
+	res.Write(payload)
 
 }
 

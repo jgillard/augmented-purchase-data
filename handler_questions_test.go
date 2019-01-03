@@ -1,6 +1,7 @@
 package transactioncategories
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -337,6 +338,35 @@ func TestRenameQuestion(t *testing.T) {
 		}
 	})
 
+	t.Run("test success responses & effect", func(t *testing.T) {
+		newQuestionName := "whattup world?"
+		requestBody, err := json.Marshal(jsonName{Name: newQuestionName})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := newPatchRequest(t, "/categories/1234/questions/1", bytes.NewReader(requestBody))
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+
+		responseBody := unmarshallQuestionFromBody(t, result.Body)
+
+		renamedQuestion := Question{ID: "1", Value: newQuestionName, CategoryID: "1234", Type: "number"}
+		assertStringsEqual(t, responseBody.ID, renamedQuestion.ID)
+		assertStringsEqual(t, responseBody.Value, renamedQuestion.Value)
+		assertStringsEqual(t, responseBody.CategoryID, renamedQuestion.CategoryID)
+		assertStringsEqual(t, responseBody.Type, renamedQuestion.Type)
+
+		// check the store is updated
+		got := questionStore.questionList.Questions[0].Value
+		want := renamedQuestion.Value
+		assertStringsEqual(t, got, want)
+	})
 }
 
 type stubQuestionStore struct {
@@ -375,6 +405,20 @@ func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest
 	s.questionList.Questions = append(s.questionList.Questions, question)
 
 	return question
+}
+
+func (s *stubQuestionStore) RenameQuestion(questionID, questionValue string) Question {
+	index := 0
+
+	for i, q := range s.questionList.Questions {
+		if q.ID == questionID {
+			index = i
+			s.questionList.Questions[index].Value = questionValue
+			break
+		}
+	}
+
+	return s.questionList.Questions[index]
 }
 
 func (s *stubQuestionStore) questionIDExists(questionID string) bool {
