@@ -330,6 +330,54 @@ func TestAddQuestion(t *testing.T) {
 	})
 }
 
+func TestRenameQuestion(t *testing.T) {
+
+	questionList := QuestionList{
+		Questions: []Question{
+			Question{ID: "1", Value: "how many nuggets?", CategoryID: "1234", Type: "number"},
+			Question{ID: "2", Value: "how much nougat?", CategoryID: "1234", Type: "number"},
+		},
+	}
+	questionStore := &stubQuestionStore{questionList}
+	server := NewServer(nil, questionStore)
+
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := map[string]struct {
+			path  string
+			input string
+			want  int
+		}{
+			"invalid json":           {path: "/categories/1234/questions/1", input: `{"foo":""}`, want: http.StatusBadRequest},
+			"invalid name":           {path: "/categories/1234/questions/1", input: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
+			"duplicate name":         {path: "/categories/1234/questions/1", input: `{"name":"how much nougat?"}`, want: http.StatusConflict},
+			"category doesn't exist": {path: "/categories/5678/questions/1", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"ID not found":           {path: "/categories/1234/questions/3", input: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+		}
+
+		for name, c := range cases {
+			t.Run(name, func(t *testing.T) {
+				body := strings.NewReader(c.input)
+				req := newPatchRequest(t, c.path, body)
+				res := httptest.NewRecorder()
+
+				server.ServeHTTP(res, req)
+				result := res.Result()
+
+				// check the response
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+				assertBodyEmpty(t, result.Body)
+
+				// check the store is unmodified
+				got := questionStore.questionList
+				want := questionList
+				assertDeepEqual(t, got, want)
+			})
+		}
+	})
+
+}
+
 type stubQuestionStore struct {
 	questionList QuestionList
 }
