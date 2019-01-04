@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/rs/xid"
 )
 
 func TestListCategories(t *testing.T) {
@@ -20,7 +18,7 @@ func TestListCategories(t *testing.T) {
 			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := &stubCategoryStore{categoryList}
+	store := &InMemoryCategoryStore{categoryList}
 	server := NewServer(store, nil)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
@@ -55,7 +53,7 @@ func TestGetCategory(t *testing.T) {
 			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := &stubCategoryStore{categoryList}
+	store := &InMemoryCategoryStore{categoryList}
 	server := NewServer(store, nil)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
@@ -121,7 +119,7 @@ func TestAddCategory(t *testing.T) {
 			Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
 		},
 	}
-	store := &stubCategoryStore{stubCategories}
+	store := &InMemoryCategoryStore{stubCategories}
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -198,7 +196,7 @@ func TestRenameCategory(t *testing.T) {
 			Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
 	}
-	store := &stubCategoryStore{stubCategories}
+	store := &InMemoryCategoryStore{stubCategories}
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -273,7 +271,7 @@ func TestRemoveCategory(t *testing.T) {
 			existingCategory,
 		},
 	}
-	store := &stubCategoryStore{stubCategories}
+	store := &InMemoryCategoryStore{stubCategories}
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -345,127 +343,4 @@ func testIsValidCategoryName(t *testing.T) {
 			}
 		})
 	}
-}
-
-type stubCategoryStore struct {
-	categories CategoryList
-}
-
-func (s *stubCategoryStore) ListCategories() CategoryList {
-	return s.categories
-}
-
-func (s *stubCategoryStore) GetCategory(id string) CategoryGetResponse {
-	var category Category
-	for _, c := range s.categories.Categories {
-		if c.ID == id {
-			category = c
-		}
-	}
-
-	if category == (Category{}) {
-		return CategoryGetResponse{}
-	}
-
-	var children []Category
-	for _, c := range s.categories.Categories {
-		if c.ParentID == category.ID {
-			children = append(children, c)
-		}
-	}
-
-	response := CategoryGetResponse{
-		category,
-		children,
-	}
-	return response
-}
-
-func (s *stubCategoryStore) AddCategory(categoryName string) Category {
-	newCat := Category{
-		ID:   xid.New().String(),
-		Name: categoryName,
-	}
-
-	s.categories.Categories = append(s.categories.Categories, newCat)
-
-	return newCat
-}
-
-func (s *stubCategoryStore) RenameCategory(id, name string) Category {
-	index := 0
-
-	for i, c := range s.categories.Categories {
-		if c.ID == id {
-			index = i
-			s.categories.Categories[index].Name = name
-			break
-		}
-	}
-
-	return s.categories.Categories[index]
-}
-
-func (s *stubCategoryStore) DeleteCategory(id string) {
-	index := 0
-
-	for i, c := range s.categories.Categories {
-		if c.ID == id {
-			index = i
-			break
-		}
-	}
-
-	s.categories.Categories = append(s.categories.Categories[:index], s.categories.Categories[index+1:]...)
-}
-
-func (s *stubCategoryStore) categoryIDExists(categoryID string) bool {
-	alreadyExists := false
-
-	for _, c := range s.categories.Categories {
-		if c.ID == categoryID {
-			alreadyExists = true
-		}
-	}
-
-	return alreadyExists
-}
-
-func (s *stubCategoryStore) categoryNameExists(categoryName string) bool {
-	alreadyExists := false
-
-	for _, c := range s.categories.Categories {
-		if c.Name == categoryName {
-			alreadyExists = true
-		}
-	}
-
-	return alreadyExists
-}
-
-func (s *stubCategoryStore) categoryParentIDExists(parentID string) bool {
-	exists := false
-
-	for _, c := range s.categories.Categories {
-		if c.ID == parentID {
-			exists = true
-		}
-	}
-
-	return exists
-}
-
-func (s *stubCategoryStore) getCategoryDepth(categoryID string) int {
-	depth := 0
-
-	for _, c := range s.categories.Categories {
-		if c.ID == categoryID {
-			// if already a subcategory
-			if c.ParentID != "" {
-				depth = 1
-			}
-		}
-	}
-
-	return depth
 }

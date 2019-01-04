@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/rs/xid"
 )
 
 func TestListQuestionsForCategory(t *testing.T) {
@@ -22,7 +20,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 			}},
 		},
 	}
-	questionStore := &stubQuestionStore{questionList}
+	questionStore := &InMemoryQuestionStore{questionList}
 	server := NewServer(nil, questionStore)
 
 	t.Run("it returns a json question list for a category", func(t *testing.T) {
@@ -87,8 +85,8 @@ func TestAddQuestion(t *testing.T) {
 				}},
 			},
 		}
-		categoryStore := &stubCategoryStore{categoryList}
-		questionStore := &stubQuestionStore{questionList}
+		categoryStore := &InMemoryCategoryStore{categoryList}
+		questionStore := &InMemoryQuestionStore{questionList}
 		server := NewServer(categoryStore, questionStore)
 
 		cases := map[string]struct {
@@ -132,7 +130,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &stubQuestionStore{questionList}
+		questionStore := &InMemoryQuestionStore{questionList}
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -178,7 +176,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &stubQuestionStore{questionList}
+		questionStore := &InMemoryQuestionStore{questionList}
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -223,7 +221,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &stubQuestionStore{questionList}
+		questionStore := &InMemoryQuestionStore{questionList}
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -293,8 +291,8 @@ func TestRenameQuestion(t *testing.T) {
 			Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
-	categoryStore := &stubCategoryStore{categoryList}
-	questionStore := &stubQuestionStore{questionList}
+	categoryStore := &InMemoryCategoryStore{categoryList}
+	questionStore := &InMemoryQuestionStore{questionList}
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -377,8 +375,8 @@ func TestRemoveQuestion(t *testing.T) {
 			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	categoryStore := &stubCategoryStore{categoryList}
-	questionStore := &stubQuestionStore{questionList}
+	categoryStore := &InMemoryCategoryStore{categoryList}
+	questionStore := &InMemoryQuestionStore{questionList}
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -429,101 +427,4 @@ func TestRemoveQuestion(t *testing.T) {
 		want := 0
 		assertNumbersEqual(t, got, want)
 	})
-}
-
-type stubQuestionStore struct {
-	questionList QuestionList
-}
-
-func (s *stubQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {
-	var questionList QuestionList
-	for _, q := range s.questionList.Questions {
-		if q.CategoryID == categoryID {
-			questionList.Questions = append(questionList.Questions, q)
-		}
-	}
-	return questionList
-}
-
-func (s *stubQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
-	question := Question{
-		ID:         xid.New().String(),
-		Title:      q.Title,
-		CategoryID: categoryID,
-		Type:       q.Type,
-	}
-
-	if q.Type == "string" {
-		question.Options = OptionList{}
-		for _, title := range q.Options {
-			option := Option{
-				ID:    xid.New().String(),
-				Title: title,
-			}
-			question.Options = append(question.Options, option)
-		}
-	}
-
-	s.questionList.Questions = append(s.questionList.Questions, question)
-
-	return question
-}
-
-func (s *stubQuestionStore) RenameQuestion(questionID, questionTitle string) Question {
-	index := 0
-
-	for i, q := range s.questionList.Questions {
-		if q.ID == questionID {
-			index = i
-			s.questionList.Questions[index].Title = questionTitle
-			break
-		}
-	}
-
-	return s.questionList.Questions[index]
-}
-
-func (s *stubQuestionStore) DeleteQuestion(questionID string) {
-	index := 0
-	for i, q := range s.questionList.Questions {
-		if q.ID == questionID {
-			index = i
-			break
-		}
-	}
-	s.questionList.Questions = append(s.questionList.Questions[:index], s.questionList.Questions[index+1:]...)
-}
-
-func (s *stubQuestionStore) questionIDExists(questionID string) bool {
-	exists := false
-	for _, q := range s.questionList.Questions {
-		if q.ID == questionID {
-			exists = true
-		}
-	}
-	return exists
-}
-
-func (s *stubQuestionStore) questionTitleExists(categoryID, questionTitle string) bool {
-	alreadyExists := false
-	for _, q := range s.questionList.Questions {
-		if q.CategoryID == categoryID {
-			if q.Title == questionTitle {
-				alreadyExists = true
-			}
-		}
-	}
-	return alreadyExists
-}
-
-func (s *stubQuestionStore) questionBelongsToCategory(questionID, categoryID string) bool {
-	belongsToCategory := true
-	for _, q := range s.questionList.Questions {
-		if q.ID == questionID {
-			if q.CategoryID != categoryID {
-				belongsToCategory = false
-			}
-		}
-	}
-	return belongsToCategory
 }

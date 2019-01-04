@@ -7,7 +7,7 @@ import (
 )
 
 func TestStatusHandler(t *testing.T) {
-	server := NewServer(&stubCategoryStore{}, nil)
+	server := NewServer(nil, nil)
 	req := newGetRequest(t, "/status")
 	res := httptest.NewRecorder()
 
