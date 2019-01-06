@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jgillard/monzo-categories"
+	"github.com/jgillard/practising-go-tdd"
 )
 
 func main() {
