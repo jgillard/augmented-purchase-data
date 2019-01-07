@@ -7,8 +7,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-const statusBodyString = "OK"
+const statusBodyJSON = `{"status":"OK"}`
 
-func (c *Server) statusHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	io.WriteString(res, statusBodyString)
+func (c *Server) statusHandler(res http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+	io.WriteString(res, statusBodyJSON)
 }

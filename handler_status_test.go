@@ -17,6 +17,6 @@ func TestStatusHandler(t *testing.T) {
 	assertStatusCode(t, result.StatusCode, http.StatusOK)
 
 	body := readBodyBytes(t, result.Body)
-	assertBodyString(t, string(body), statusBodyString)
+	assertBodyString(t, string(body), statusBodyJSON)
 
 }
