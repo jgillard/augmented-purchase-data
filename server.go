@@ -14,6 +14,15 @@ type Server struct {
 
 const jsonContentType = "application/json"
 
+type Middleware struct {
+	handler http.Handler
+}
+
+func (m *Middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", jsonContentType)
+	m.handler.ServeHTTP(res, req)
+}
+
 func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 	p := new(Server)
 
@@ -42,7 +51,7 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	})
 
-	p.Handler = router
+	p.Handler = &Middleware{router}
 
 	return p
 }

@@ -56,8 +56,6 @@ type jsonName struct {
 }
 
 func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	// GET the list of categories
 	categoryList := c.categoryStore.ListCategories()
 	payload := marshallResponse(categoryList)
@@ -66,8 +64,6 @@ func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request,
 }
 
 func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	// GET a specific category
 	categoryID := ps.ByName("category")
 	category := c.categoryStore.GetCategory(categoryID)
@@ -83,8 +79,6 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 }
 
 func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -139,8 +133,6 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 }
 
 func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -181,8 +173,6 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 }
 
 func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 
 	if !c.categoryStore.categoryIDExists(categoryID) {

@@ -55,8 +55,6 @@ type jsonTitle struct {
 var possibleOptionTypes = []string{"string", "number"}
 
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 
 	questionList := c.questionStore.ListQuestionsForCategory(categoryID)
@@ -67,8 +65,6 @@ func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request,
 }
 
 func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -143,8 +139,6 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 }
 
 func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 	questionID := ps.ByName("question")
 
@@ -200,8 +194,6 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 }
 
 func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	res.Header().Set("Content-Type", jsonContentType)
-
 	categoryID := ps.ByName("category")
 	questionID := ps.ByName("question")
 
