@@ -27,11 +27,13 @@ func TestListCategories(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryListFromBody(t, result.Body)
+		got := unmarshallCategoryListFromBody(t, body)
 		want := categoryList
 		assertDeepEqual(t, got, want)
 		assertStringsEqual(t, got.Categories[0].ID, "abcdef")
@@ -62,11 +64,13 @@ func TestGetCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-		assertBodyEmpty(t, result.Body)
+		assertBodyIsJSON(t, body)
+		assertBodyEmptyJSON(t, body)
 	})
 
 	t.Run("get category with children", func(t *testing.T) {
@@ -75,12 +79,14 @@ func TestGetCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryGetResponseFromBody(t, result.Body)
+		got := unmarshallCategoryGetResponseFromBody(t, body)
 		assertStringsEqual(t, got.ID, categoryList.Categories[0].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[0].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[0].ParentID)
@@ -98,12 +104,14 @@ func TestGetCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryGetResponseFromBody(t, result.Body)
+		got := unmarshallCategoryGetResponseFromBody(t, body)
 		assertStringsEqual(t, got.ID, categoryList.Categories[1].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[1].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[1].ParentID)
@@ -138,17 +146,19 @@ func TestAddCategory(t *testing.T) {
 
 		for name, c := range cases {
 			t.Run(name, func(t *testing.T) {
-				body := strings.NewReader(c.input)
-				req := newPostRequest(t, "/categories", body)
+				requestBody := strings.NewReader(c.input)
+				req := newPostRequest(t, "/categories", requestBody)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -161,17 +171,19 @@ func TestAddCategory(t *testing.T) {
 	t.Run("test success response & effect", func(t *testing.T) {
 		categoryName := "new category name"
 		parentID := ""
-		body := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":""}`, categoryName))
-		req := newPostRequest(t, "/categories", body)
+		requestBody := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":""}`, categoryName))
+		req := newPostRequest(t, "/categories", requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryFromBody(t, result.Body)
+		got := unmarshallCategoryFromBody(t, body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -213,17 +225,19 @@ func TestRenameCategory(t *testing.T) {
 
 		for name, c := range cases {
 			t.Run(name, func(t *testing.T) {
-				body := strings.NewReader(c.body)
-				req := newPatchRequest(t, fmt.Sprintf("/categories/%s", c.ID), body)
+				requestBody := strings.NewReader(c.body)
+				req := newPatchRequest(t, fmt.Sprintf("/categories/%s", c.ID), requestBody)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -244,12 +258,14 @@ func TestRenameCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		responseBody := unmarshallCategoryFromBody(t, result.Body)
+		responseBody := unmarshallCategoryFromBody(t, body)
 
 		renamedCategory := Category{ID: "1234", Name: newCatName, ParentID: ""}
 		assertStringsEqual(t, responseBody.ID, renamedCategory.ID)
@@ -289,11 +305,13 @@ func TestRemoveCategory(t *testing.T) {
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := store.categories
@@ -309,11 +327,13 @@ func TestRemoveCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check response
 		assertStatusCode(t, result.StatusCode, http.StatusNoContent)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-		assertBodyEmpty(t, result.Body)
+		assertBodyIsJSON(t, body)
+		assertBodyEmptyJSON(t, body)
 
 		// check store is updated
 		got := len(store.categories.Categories)

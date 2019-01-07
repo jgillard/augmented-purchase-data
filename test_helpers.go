@@ -76,9 +76,8 @@ func assertIsXid(t *testing.T, s string) {
 	}
 }
 
-func assertBodyEmpty(t *testing.T, b io.ReadCloser) {
+func assertBodyEmptyJSON(t *testing.T, got []byte) {
 	t.Helper()
-	got := readBodyBytes(t, b)
 	if len(got) != 0 {
 		t.Errorf("wanted an empty response body, got '%s'", got)
 	}
@@ -93,9 +92,19 @@ func readBodyBytes(t *testing.T, b io.ReadCloser) []byte {
 	return body
 }
 
-func unmarshallCategoryListFromBody(t *testing.T, b io.ReadCloser) CategoryList {
-	bodyBytes := readBodyBytes(t, b)
+func unmarshallStatusFromBody(t *testing.T, bodyBytes []byte) jsonStatus {
+	var got jsonStatus
 
+	err := json.Unmarshal(bodyBytes, &got)
+	// check for syntax error or type mismatch
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return got
+}
+
+func unmarshallCategoryListFromBody(t *testing.T, bodyBytes []byte) CategoryList {
 	var got CategoryList
 
 	err := json.Unmarshal(bodyBytes, &got)
@@ -107,9 +116,7 @@ func unmarshallCategoryListFromBody(t *testing.T, b io.ReadCloser) CategoryList 
 	return got
 }
 
-func unmarshallCategoryFromBody(t *testing.T, b io.ReadCloser) Category {
-	bodyBytes := readBodyBytes(t, b)
-
+func unmarshallCategoryFromBody(t *testing.T, bodyBytes []byte) Category {
 	var got Category
 
 	err := json.Unmarshal(bodyBytes, &got)
@@ -121,9 +128,7 @@ func unmarshallCategoryFromBody(t *testing.T, b io.ReadCloser) Category {
 	return got
 }
 
-func unmarshallCategoryGetResponseFromBody(t *testing.T, b io.ReadCloser) CategoryGetResponse {
-	bodyBytes := readBodyBytes(t, b)
-
+func unmarshallCategoryGetResponseFromBody(t *testing.T, bodyBytes []byte) CategoryGetResponse {
 	var got CategoryGetResponse
 
 	err := json.Unmarshal(bodyBytes, &got)
@@ -135,9 +140,7 @@ func unmarshallCategoryGetResponseFromBody(t *testing.T, b io.ReadCloser) Catego
 	return got
 }
 
-func unmarshallQuestionListFromBody(t *testing.T, b io.ReadCloser) QuestionList {
-	bodyBytes := readBodyBytes(t, b)
-
+func unmarshallQuestionListFromBody(t *testing.T, bodyBytes []byte) QuestionList {
 	var got QuestionList
 
 	err := json.Unmarshal(bodyBytes, &got)
@@ -149,9 +152,7 @@ func unmarshallQuestionListFromBody(t *testing.T, b io.ReadCloser) QuestionList 
 	return got
 }
 
-func unmarshallQuestionFromBody(t *testing.T, b io.ReadCloser) Question {
-	bodyBytes := readBodyBytes(t, b)
-
+func unmarshallQuestionFromBody(t *testing.T, bodyBytes []byte) Question {
 	var got Question
 
 	err := json.Unmarshal(bodyBytes, &got)
@@ -161,4 +162,12 @@ func unmarshallQuestionFromBody(t *testing.T, b io.ReadCloser) Question {
 	}
 
 	return got
+}
+
+func assertBodyIsJSON(t *testing.T, bodyBytes []byte) {
+	var js json.RawMessage
+
+	if json.Unmarshal(bodyBytes, &js) != nil {
+		t.Fatalf("body is not json")
+	}
 }

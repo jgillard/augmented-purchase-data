@@ -29,11 +29,13 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, result.Body)
+		got := unmarshallQuestionListFromBody(t, body)
 		want := questionList.Questions[0]
 		assertDeepEqual(t, got.Questions[0], want)
 	})
@@ -44,11 +46,13 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, result.Body)
+		got := unmarshallQuestionListFromBody(t, body)
 		want := questionList.Questions[1]
 		assertDeepEqual(t, got.Questions[0], want)
 	})
@@ -59,11 +63,13 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, result.Body)
+		got := unmarshallQuestionListFromBody(t, body)
 		want := len(got.Questions)
 		assertNumbersEqual(t, want, 0)
 	})
@@ -106,17 +112,19 @@ func TestAddQuestion(t *testing.T) {
 
 		for name, c := range cases {
 			t.Run(name, func(t *testing.T) {
-				body := strings.NewReader(c.input)
-				req := newPostRequest(t, c.path, body)
+				requestBody := strings.NewReader(c.input)
+				req := newPostRequest(t, c.path, requestBody)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := questionStore.questionList
@@ -138,18 +146,20 @@ func TestAddQuestion(t *testing.T) {
 		optionType := "number"
 
 		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s"}`, title, optionType)
-		body := strings.NewReader(jsonReq)
+		requestBody := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
-		req := newPostRequest(t, path, body)
+		req := newPostRequest(t, path, requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, result.Body)
+		got := unmarshallQuestionFromBody(t, body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -184,18 +194,20 @@ func TestAddQuestion(t *testing.T) {
 		optionType := "string"
 
 		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s"}`, title, optionType)
-		body := strings.NewReader(jsonReq)
+		requestBody := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
-		req := newPostRequest(t, path, body)
+		req := newPostRequest(t, path, requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, result.Body)
+		got := unmarshallQuestionFromBody(t, body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -235,18 +247,20 @@ func TestAddQuestion(t *testing.T) {
 		}
 		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s", "options":%s}`, title, optionType, optionsJSON)
 
-		body := strings.NewReader(jsonReq)
+		requestBody := strings.NewReader(jsonReq)
 		path := fmt.Sprintf("/categories/%s/questions", categoryID)
-		req := newPostRequest(t, path, body)
+		req := newPostRequest(t, path, requestBody)
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, result.Body)
+		got := unmarshallQuestionFromBody(t, body)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -311,17 +325,19 @@ func TestRenameQuestion(t *testing.T) {
 
 		for name, c := range cases {
 			t.Run(name, func(t *testing.T) {
-				body := strings.NewReader(c.input)
-				req := newPatchRequest(t, c.path, body)
+				requestBody := strings.NewReader(c.input)
+				req := newPatchRequest(t, c.path, requestBody)
 				res := httptest.NewRecorder()
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := questionStore.questionList
@@ -342,12 +358,14 @@ func TestRenameQuestion(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
 
-		responseBody := unmarshallQuestionFromBody(t, result.Body)
+		responseBody := unmarshallQuestionFromBody(t, body)
 
 		renamedQuestion := Question{ID: "1", Title: newQuestionTitle, CategoryID: "1234", Type: "number"}
 		assertStringsEqual(t, responseBody.ID, renamedQuestion.ID)
@@ -396,11 +414,13 @@ func TestRemoveQuestion(t *testing.T) {
 
 				server.ServeHTTP(res, req)
 				result := res.Result()
+				body := readBodyBytes(t, result.Body)
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-				assertBodyEmpty(t, result.Body)
+				assertBodyIsJSON(t, body)
+				assertBodyEmptyJSON(t, body)
 
 				// check the store is unmodified
 				got := questionStore.questionList
@@ -416,11 +436,13 @@ func TestRemoveQuestion(t *testing.T) {
 
 		server.ServeHTTP(res, req)
 		result := res.Result()
+		body := readBodyBytes(t, result.Body)
 
 		// check response
 		assertStatusCode(t, result.StatusCode, http.StatusNoContent)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
-		assertBodyEmpty(t, result.Body)
+		assertBodyIsJSON(t, body)
+		assertBodyEmptyJSON(t, body)
 
 		// check store is updated
 		got := len(questionStore.questionList.Questions)

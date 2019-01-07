@@ -13,10 +13,13 @@ func TestStatusHandler(t *testing.T) {
 
 	server.ServeHTTP(res, req)
 	result := res.Result()
+	body := readBodyBytes(t, result.Body)
 
 	assertStatusCode(t, result.StatusCode, http.StatusOK)
+	assertBodyIsJSON(t, body)
 
-	body := readBodyBytes(t, result.Body)
-	assertBodyString(t, string(body), statusBodyJSON)
+	got := unmarshallStatusFromBody(t, body)
+	want := jsonStatus{"OK"}
+	assertDeepEqual(t, got, want)
 
 }
