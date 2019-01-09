@@ -168,7 +168,7 @@ func TestAddCategory(t *testing.T) {
 		}
 	})
 
-	t.Run("test success response & effect", func(t *testing.T) {
+	t.Run("test success response & effect without parentID", func(t *testing.T) {
 		categoryName := "new category name"
 		parentID := ""
 		requestBody := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":""}`, categoryName))
@@ -192,6 +192,38 @@ func TestAddCategory(t *testing.T) {
 
 		// check the store has been modified
 		got = store.categories.Categories[2]
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Name, categoryName)
+		assertStringsEqual(t, got.ParentID, parentID)
+
+		// get ID from store and check that's in returned Location header
+		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s", got.ID))
+	})
+
+	t.Run("test success response & effect with parentID", func(t *testing.T) {
+		categoryName := "another new category name"
+		parentID := "1234"
+		requestBody := strings.NewReader(fmt.Sprintf(`{"name":"%s", "parentID":"%s"}`, categoryName, parentID))
+		req := newPostRequest(t, "/categories", requestBody)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+		body := readBodyBytes(t, result.Body)
+
+		assertStatusCode(t, result.StatusCode, http.StatusCreated)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
+
+		got := unmarshallCategoryFromBody(t, body)
+
+		// check the response
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Name, categoryName)
+		assertStringsEqual(t, got.ParentID, parentID)
+
+		// check the store has been modified
+		got = store.categories.Categories[3]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
 		assertStringsEqual(t, got.ParentID, parentID)

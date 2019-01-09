@@ -15,7 +15,7 @@ import (
 type CategoryStore interface {
 	ListCategories() CategoryList
 	GetCategory(categoryID string) CategoryGetResponse
-	AddCategory(categoryName string) Category
+	AddCategory(categoryName, parentID string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
 	categoryIDExists(categoryID string) bool
@@ -123,7 +123,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	category := c.categoryStore.AddCategory(categoryName)
+	category := c.categoryStore.AddCategory(categoryName, parentID)
 
 	payload := marshallResponse(category)
 

@@ -40,10 +40,11 @@ func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
 	return response
 }
 
-func (s *InMemoryCategoryStore) AddCategory(categoryName string) Category {
+func (s *InMemoryCategoryStore) AddCategory(categoryName, parentID string) Category {
 	newCat := Category{
-		ID:   xid.New().String(),
-		Name: categoryName,
+		ID:       xid.New().String(),
+		Name:     categoryName,
+		ParentID: parentID,
 	}
 
 	s.categories.Categories = append(s.categories.Categories, newCat)
