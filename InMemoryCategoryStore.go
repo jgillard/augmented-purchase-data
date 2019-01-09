@@ -6,8 +6,8 @@ type InMemoryCategoryStore struct {
 	categories CategoryList
 }
 
-func NewInMemoryCategoryStore() *InMemoryCategoryStore {
-	return &InMemoryCategoryStore{}
+func NewInMemoryCategoryStore(c CategoryList) *InMemoryCategoryStore {
+	return &InMemoryCategoryStore{c}
 }
 
 func (s *InMemoryCategoryStore) ListCategories() CategoryList {

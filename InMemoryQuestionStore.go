@@ -6,8 +6,8 @@ type InMemoryQuestionStore struct {
 	questionList QuestionList
 }
 
-func NewInMemoryQuestionStore() *InMemoryQuestionStore {
-	return &InMemoryQuestionStore{}
+func NewInMemoryQuestionStore(q QuestionList) *InMemoryQuestionStore {
+	return &InMemoryQuestionStore{q}
 }
 
 func (s *InMemoryQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {

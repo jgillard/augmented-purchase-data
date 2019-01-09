@@ -18,7 +18,7 @@ func TestListCategories(t *testing.T) {
 			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := &InMemoryCategoryStore{categoryList}
+	store := NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestGetCategory(t *testing.T) {
 			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := &InMemoryCategoryStore{categoryList}
+	store := NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestAddCategory(t *testing.T) {
 			Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
 		},
 	}
-	store := &InMemoryCategoryStore{stubCategories}
+	store := NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -208,7 +208,7 @@ func TestRenameCategory(t *testing.T) {
 			Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
 	}
-	store := &InMemoryCategoryStore{stubCategories}
+	store := NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -287,7 +287,7 @@ func TestRemoveCategory(t *testing.T) {
 			existingCategory,
 		},
 	}
-	store := &InMemoryCategoryStore{stubCategories}
+	store := NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {

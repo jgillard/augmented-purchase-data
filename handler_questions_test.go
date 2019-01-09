@@ -20,7 +20,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 			}},
 		},
 	}
-	questionStore := &InMemoryQuestionStore{questionList}
+	questionStore := NewInMemoryQuestionStore(questionList)
 	server := NewServer(nil, questionStore)
 
 	t.Run("it returns a json question list for a category", func(t *testing.T) {
@@ -91,8 +91,8 @@ func TestAddQuestion(t *testing.T) {
 				}},
 			},
 		}
-		categoryStore := &InMemoryCategoryStore{categoryList}
-		questionStore := &InMemoryQuestionStore{questionList}
+		categoryStore := NewInMemoryCategoryStore(categoryList)
+		questionStore := NewInMemoryQuestionStore(questionList)
 		server := NewServer(categoryStore, questionStore)
 
 		cases := map[string]struct {
@@ -138,7 +138,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &InMemoryQuestionStore{questionList}
+		questionStore := NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -186,7 +186,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &InMemoryQuestionStore{questionList}
+		questionStore := NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -233,7 +233,7 @@ func TestAddQuestion(t *testing.T) {
 		questionList := QuestionList{
 			Questions: []Question{},
 		}
-		questionStore := &InMemoryQuestionStore{questionList}
+		questionStore := NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -305,8 +305,8 @@ func TestRenameQuestion(t *testing.T) {
 			Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
-	categoryStore := &InMemoryCategoryStore{categoryList}
-	questionStore := &InMemoryQuestionStore{questionList}
+	categoryStore := NewInMemoryCategoryStore(categoryList)
+	questionStore := NewInMemoryQuestionStore(questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -393,8 +393,8 @@ func TestRemoveQuestion(t *testing.T) {
 			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	categoryStore := &InMemoryCategoryStore{categoryList}
-	questionStore := &InMemoryQuestionStore{questionList}
+	categoryStore := NewInMemoryCategoryStore(categoryList)
+	questionStore := NewInMemoryQuestionStore(questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
