@@ -121,7 +121,7 @@ func TestGetCategory(t *testing.T) {
 
 func TestAddCategory(t *testing.T) {
 
-	stubCategories := CategoryList{
+	categoryList := CategoryList{
 		Categories: []Category{
 			Category{ID: "1234", Name: "existing category name", ParentID: ""},
 			Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
@@ -162,7 +162,7 @@ func TestAddCategory(t *testing.T) {
 
 				// check the store is unmodified
 				got := store.categories
-				want := stubCategories
+				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
 		}
@@ -235,7 +235,7 @@ func TestAddCategory(t *testing.T) {
 
 func TestRenameCategory(t *testing.T) {
 
-	stubCategories := CategoryList{
+	categoryList := CategoryList{
 		Categories: []Category{
 			Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
@@ -273,7 +273,7 @@ func TestRenameCategory(t *testing.T) {
 
 				// check the store is unmodified
 				got := store.categories
-				want := stubCategories
+				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
 		}
@@ -314,7 +314,7 @@ func TestRenameCategory(t *testing.T) {
 func TestRemoveCategory(t *testing.T) {
 
 	existingCategory := Category{ID: "1234", Name: "accommodation"}
-	stubCategories := CategoryList{
+	categoryList := CategoryList{
 		Categories: []Category{
 			existingCategory,
 		},
@@ -347,7 +347,7 @@ func TestRemoveCategory(t *testing.T) {
 
 				// check the store is unmodified
 				got := store.categories
-				want := stubCategories
+				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
 		}
