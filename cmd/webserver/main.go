@@ -16,8 +16,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	categoryStore := transactioncategories.NewInMemoryCategoryStore()
-	questionStore := transactioncategories.NewInMemoryQuestionStore()
+	categoryStore := transactioncategories.NewInMemoryCategoryStore(transactioncategories.CategoryList{})
+	questionStore := transactioncategories.NewInMemoryQuestionStore(transactioncategories.QuestionList{})
 
 	server := transactioncategories.NewServer(categoryStore, questionStore)
 
