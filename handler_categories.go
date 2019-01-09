@@ -55,6 +55,18 @@ type jsonName struct {
 	Name string `json:"name"`
 }
 
+type jsonError struct {
+	Title string `json:"title"`
+}
+
+type jsonErrors struct {
+	Errors []jsonError `json:"errors"`
+}
+
+const (
+	CategoryNotFound = "categoryID not found"
+)
+
 func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	// GET the list of categories
 	categoryList := c.categoryStore.ListCategories()
@@ -70,7 +82,10 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte("{}"))
+		errorResponse := jsonErrors{}
+		errorResponse.Errors = append(errorResponse.Errors, jsonError{CategoryNotFound})
+		payload := marshallResponse(errorResponse)
+		res.Write(payload)
 		return
 	}
 

@@ -179,3 +179,21 @@ func assertBodyIsJSON(t *testing.T, bodyBytes []byte) {
 		t.Fatalf("body is not json")
 	}
 }
+
+func assertBodyErrorTitle(t *testing.T, bodyBytes []byte, title string) {
+	var errors jsonErrors
+
+	err := json.Unmarshal(bodyBytes, &errors)
+	// check for syntax error or type mismatch
+	if err != nil {
+		t.Log("cannot unmarshall into jsonErrors")
+		t.Fatal(err)
+	}
+
+	if len(errors.Errors) != 1 {
+		t.Fatalf("expected %d errors in response, got %d", 1, len(errors.Errors))
+	}
+
+	assertStringsEqual(t, errors.Errors[0].Title, title)
+
+}

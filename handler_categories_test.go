@@ -70,7 +70,7 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
-		assertBodyEmptyJSON(t, body)
+		assertBodyErrorTitle(t, body, "categoryID not found")
 	})
 
 	t.Run("get category with children", func(t *testing.T) {
