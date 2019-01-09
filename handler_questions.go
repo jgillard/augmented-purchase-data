@@ -83,6 +83,7 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 			if t.Field == "options" {
 				fmt.Println(`"options" object is wrong shape`)
 				res.WriteHeader(http.StatusBadRequest)
+				res.Write([]byte("{}"))
 				return
 			}
 		default:
@@ -92,40 +93,48 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 	}
 
 	if !ensureJSONFieldsPresent(res, got, QuestionPostRequest{}) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !ensureStringFieldNonEmpty(res, "title", got.Title) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !ensureStringFieldNonEmpty(res, "type", got.Type) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !ensureStringFieldTitle(res, "type", got.Type, possibleOptionTypes) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	for _, opt := range got.Options {
 		if !ensureStringFieldNonEmpty(res, "options", opt) {
+			res.Write([]byte("{}"))
 			return
 		}
 	}
 
 	if !ensureNoDuplicates(res, "options", got.Options) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.questionStore.questionTitleExists(categoryID, got.Title) {
 		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -153,36 +162,42 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 	questionTitle := got.Title
 
 	if !ensureJSONFieldsPresent(res, got, jsonTitle{}) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidQuestionTitle(questionTitle) {
 		fmt.Println(`"title" is not a valid string`)
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !c.questionStore.questionIDExists(questionID) {
 		fmt.Println(`"questionID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !c.questionStore.questionBelongsToCategory(questionID, categoryID) {
 		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.questionStore.questionTitleExists(categoryID, got.Title) {
 		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -200,24 +215,30 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 	if c.categoryStore != nil && !c.categoryStore.categoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !c.questionStore.questionIDExists(questionID) {
 		fmt.Println(`"questionID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !c.questionStore.questionBelongsToCategory(questionID, categoryID) {
 		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	c.questionStore.DeleteQuestion(questionID)
 
-	res.WriteHeader(http.StatusNoContent)
+	payload := marshallResponse(jsonStatus{"deleted"})
+
+	res.WriteHeader(http.StatusOK)
+	res.Write(payload)
 }
 
 func IsValidQuestionTitle(title string) bool {

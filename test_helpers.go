@@ -78,8 +78,16 @@ func assertIsXid(t *testing.T, s string) {
 
 func assertBodyEmptyJSON(t *testing.T, got []byte) {
 	t.Helper()
-	if len(got) != 0 {
-		t.Errorf("wanted an empty response body, got '%s'", got)
+	if string(got) != "{}" {
+		t.Errorf("wanted an empty json body, got '%s'", got)
+	}
+}
+
+func assertBodyJSONIsStatus(t *testing.T, got []byte, want string) {
+	t.Helper()
+	body := unmarshallStatusFromBody(t, got)
+	if body.Status != want {
+		t.Errorf("wanted a json status '%s', got '%s'", want, got)
 	}
 }
 

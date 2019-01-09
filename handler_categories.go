@@ -70,6 +70,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -90,22 +91,26 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	// parentID not supplied
 	if got.ParentID == nil {
 		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -113,6 +118,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	if !c.categoryStore.categoryParentIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -120,6 +126,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	// we currently confine to 2 levels of categories
 	if c.categoryStore.getCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -146,21 +153,25 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
+		res.Write([]byte("{}"))
 		return
 	}
 
@@ -177,12 +188,16 @@ func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Reques
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte("{}"))
 		return
 	}
 
 	c.categoryStore.DeleteCategory(categoryID)
 
-	res.WriteHeader(http.StatusNoContent)
+	payload := marshallResponse(jsonStatus{"deleted"})
+
+	res.WriteHeader(http.StatusOK)
+	res.Write(payload)
 }
 
 func IsValidCategoryName(name string) bool {

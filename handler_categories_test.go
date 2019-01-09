@@ -362,10 +362,10 @@ func TestRemoveCategory(t *testing.T) {
 		body := readBodyBytes(t, result.Body)
 
 		// check response
-		assertStatusCode(t, result.StatusCode, http.StatusNoContent)
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
-		assertBodyEmptyJSON(t, body)
+		assertBodyJSONIsStatus(t, body, "deleted")
 
 		// check store is updated
 		got := len(store.categories.Categories)
