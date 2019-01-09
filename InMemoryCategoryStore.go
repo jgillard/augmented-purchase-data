@@ -15,7 +15,7 @@ func (s *InMemoryCategoryStore) ListCategories() CategoryList {
 }
 
 func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
-	var category Category
+	category := Category{}
 	for _, c := range s.categories.Categories {
 		if c.ID == id {
 			category = c
@@ -26,7 +26,7 @@ func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
 		return CategoryGetResponse{}
 	}
 
-	var children []Category
+	children := []Category{}
 	for _, c := range s.categories.Categories {
 		if c.ParentID == category.ID {
 			children = append(children, c)
