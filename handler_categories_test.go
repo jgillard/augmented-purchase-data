@@ -274,14 +274,41 @@ func TestRenameCategory(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
-			ID   string
-			body string
-			want int
+			ID         string
+			body       string
+			want       int
+			errorTitle string
 		}{
-			"invalid json":   {ID: "1234", body: `{"foo":""}`, want: http.StatusBadRequest},
-			"invalid name":   {ID: "1234", body: `{"name":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
-			"duplicate name": {ID: "1234", body: `{"name":"accommodation"}`, want: http.StatusConflict},
-			"ID not found":   {ID: "5678", body: `{"name":"irrelevant"}`, want: http.StatusNotFound},
+			"invalid json": {
+				ID:         "1234",
+				body:       `{"foo":`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorInvalidJSON,
+			},
+			"name missing": {
+				ID:         "1234",
+				body:       `{"foo":"bar"}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorFieldMissing,
+			},
+			"invalid name": {
+				ID:         "1234",
+				body:       `{"name":"foo/*!bar"}`,
+				want:       http.StatusUnprocessableEntity,
+				errorTitle: ErrorInvalidCategoryName,
+			},
+			"duplicate name": {
+				ID:         "1234",
+				body:       `{"name":"accommodation"}`,
+				want:       http.StatusConflict,
+				errorTitle: ErrorDuplicateCategoryName,
+			},
+			"ID not found": {
+				ID:         "5678",
+				body:       `{"name":"irrelevant"}`,
+				want:       http.StatusNotFound,
+				errorTitle: ErrorCategoryNotFound,
+			},
 		}
 
 		for name, c := range cases {
@@ -298,7 +325,7 @@ func TestRenameCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := store.categories

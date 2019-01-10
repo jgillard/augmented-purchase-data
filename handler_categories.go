@@ -170,31 +170,37 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 		log.Fatal(err)
 	}
 
+	if !jsonIsValid(requestBody) {
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write(craftErrorPayload(ErrorInvalidJSON))
+		return
+	}
+
 	var got jsonName
 	UnmarshallRequest(requestBody, &got)
 
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorFieldMissing))
 		return
 	}
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorCategoryNotFound))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorDuplicateCategoryName))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
 		return
 	}
 
