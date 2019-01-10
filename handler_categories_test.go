@@ -33,7 +33,9 @@ func TestListCategories(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryListFromBody(t, body)
+		var got CategoryList
+		unmarshallInterfaceFromBody(t, body, &got)
+
 		want := categoryList
 		assertDeepEqual(t, got, want)
 		assertStringsEqual(t, got.Categories[0].ID, "abcdef")
@@ -86,7 +88,8 @@ func TestGetCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryGetResponseFromBody(t, body)
+		var got CategoryGetResponse
+		unmarshallInterfaceFromBody(t, body, &got)
 		assertStringsEqual(t, got.ID, categoryList.Categories[0].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[0].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[0].ParentID)
@@ -111,7 +114,8 @@ func TestGetCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryGetResponseFromBody(t, body)
+		var got CategoryGetResponse
+		unmarshallInterfaceFromBody(t, body, &got)
 		assertStringsEqual(t, got.ID, categoryList.Categories[1].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[1].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[1].ParentID)
@@ -212,7 +216,8 @@ func TestAddCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryFromBody(t, body)
+		var got Category
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -244,7 +249,8 @@ func TestAddCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallCategoryFromBody(t, body)
+		var got Category
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -353,7 +359,8 @@ func TestRenameCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		responseBody := unmarshallCategoryFromBody(t, body)
+		var responseBody Category
+		unmarshallInterfaceFromBody(t, body, &responseBody)
 
 		renamedCategory := Category{ID: "1234", Name: newCatName, ParentID: ""}
 		assertStringsEqual(t, responseBody.ID, renamedCategory.ID)

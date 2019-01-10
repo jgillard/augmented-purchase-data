@@ -18,7 +18,8 @@ func TestStatusHandler(t *testing.T) {
 	assertStatusCode(t, result.StatusCode, http.StatusOK)
 	assertBodyIsJSON(t, body)
 
-	got := unmarshallStatusFromBody(t, body)
+	var got jsonStatus
+	unmarshallInterfaceFromBody(t, body, &got)
 	want := jsonStatus{"OK"}
 	assertDeepEqual(t, got, want)
 

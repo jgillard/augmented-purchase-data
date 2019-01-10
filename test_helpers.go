@@ -85,7 +85,8 @@ func assertBodyEmptyJSON(t *testing.T, got []byte) {
 
 func assertBodyJSONIsStatus(t *testing.T, got []byte, want string) {
 	t.Helper()
-	body := unmarshallStatusFromBody(t, got)
+	var body jsonStatus
+	unmarshallInterfaceFromBody(t, got, &body)
 	if body.Status != want {
 		t.Errorf("wanted a json status '%s', got '%s'", want, got)
 	}
@@ -100,76 +101,15 @@ func readBodyBytes(t *testing.T, b io.ReadCloser) []byte {
 	return body
 }
 
-func unmarshallStatusFromBody(t *testing.T, bodyBytes []byte) jsonStatus {
-	var got jsonStatus
-
-	err := json.Unmarshal(bodyBytes, &got)
+func unmarshallInterfaceFromBody(t *testing.T, bodyBytes []byte, got interface{}) interface{} {
+	err := json.Unmarshal(bodyBytes, got)
 	// check for syntax error or type mismatch
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	return got
-}
 
-func unmarshallCategoryListFromBody(t *testing.T, bodyBytes []byte) CategoryList {
-	var got CategoryList
-
-	err := json.Unmarshal(bodyBytes, &got)
-	// check for syntax error or type mismatch
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return got
-}
-
-func unmarshallCategoryFromBody(t *testing.T, bodyBytes []byte) Category {
-	var got Category
-
-	err := json.Unmarshal(bodyBytes, &got)
-	// check for syntax error or type mismatch
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return got
-}
-
-func unmarshallCategoryGetResponseFromBody(t *testing.T, bodyBytes []byte) CategoryGetResponse {
-	var got CategoryGetResponse
-
-	err := json.Unmarshal(bodyBytes, &got)
-	// check for syntax error or type mismatch
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return got
-}
-
-func unmarshallQuestionListFromBody(t *testing.T, bodyBytes []byte) QuestionList {
-	var got QuestionList
-
-	err := json.Unmarshal(bodyBytes, &got)
-	// check for syntax error or type mismatch
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return got
-}
-
-func unmarshallQuestionFromBody(t *testing.T, bodyBytes []byte) Question {
-	var got Question
-
-	err := json.Unmarshal(bodyBytes, &got)
-	// check for syntax error or type mismatch
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return got
 }
 
 func assertBodyIsJSON(t *testing.T, bodyBytes []byte) {

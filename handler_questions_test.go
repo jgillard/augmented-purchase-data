@@ -35,7 +35,8 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, body)
+		var got QuestionList
+		unmarshallInterfaceFromBody(t, body, &got)
 		want := questionList.Questions[0]
 		assertDeepEqual(t, got.Questions[0], want)
 	})
@@ -52,7 +53,8 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, body)
+		var got QuestionList
+		unmarshallInterfaceFromBody(t, body, &got)
 		want := questionList.Questions[1]
 		assertDeepEqual(t, got.Questions[0], want)
 	})
@@ -69,7 +71,8 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionListFromBody(t, body)
+		var got QuestionList
+		unmarshallInterfaceFromBody(t, body, &got)
 		want := len(got.Questions)
 		assertNumbersEqual(t, want, 0)
 	})
@@ -206,7 +209,8 @@ func TestAddQuestion(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, body)
+		var got Question
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -254,7 +258,8 @@ func TestAddQuestion(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, body)
+		var got Question
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -304,7 +309,8 @@ func TestAddQuestion(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, body)
+		var got Question
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -357,7 +363,8 @@ func TestAddQuestion(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		got := unmarshallQuestionFromBody(t, body)
+		var got Question
+		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
 		assertIsXid(t, got.ID)
@@ -499,7 +506,8 @@ func TestRenameQuestion(t *testing.T) {
 		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 		assertBodyIsJSON(t, body)
 
-		responseBody := unmarshallQuestionFromBody(t, body)
+		var responseBody Question
+		unmarshallInterfaceFromBody(t, body, &responseBody)
 
 		renamedQuestion := Question{ID: "1", Title: newQuestionTitle, CategoryID: "1234", Type: "number"}
 		assertStringsEqual(t, responseBody.ID, renamedQuestion.ID)
