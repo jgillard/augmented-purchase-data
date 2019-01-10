@@ -26,30 +26,62 @@ func TestInMemoryQuestionStore_AddQuestion(t *testing.T) {
 	store := NewInMemoryQuestionStore(questionList)
 
 	categoryID := "1234"
-	question := QuestionPostRequest{
-		Title:   "foo",
-		Type:    "string",
-		Options: []string{"bar"},
-	}
 
-	got := store.AddQuestion(categoryID, question)
+	t.Run("question with options", func(t *testing.T) {
+		question := QuestionPostRequest{
+			Title:   "foo",
+			Type:    "string",
+			Options: &[]string{"bar"},
+		}
 
-	// assert response
-	assertIsXid(t, got.ID)
-	assertStringsEqual(t, got.Title, question.Title)
-	assertStringsEqual(t, got.CategoryID, categoryID)
-	assertStringsEqual(t, got.Type, question.Type)
-	assertIsXid(t, got.ID)
-	assertStringsEqual(t, got.Options[0].Title, question.Options[0])
+		got := store.AddQuestion(categoryID, question)
 
-	// assert store
-	got = store.questionList.Questions[0]
-	assertIsXid(t, got.ID)
-	assertStringsEqual(t, got.Title, question.Title)
-	assertStringsEqual(t, got.CategoryID, categoryID)
-	assertStringsEqual(t, got.Type, question.Type)
-	assertIsXid(t, got.ID)
-	assertStringsEqual(t, got.Options[0].Title, question.Options[0])
+		// assert response
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, question.Title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, question.Type)
+		assertIsXid(t, got.Options[0].ID)
+		assertStringsEqual(t, got.Options[0].Title, (*question.Options)[0])
+
+		// assert store
+		got = store.questionList.Questions[0]
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, question.Title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, question.Type)
+		assertIsXid(t, got.Options[0].ID)
+		assertStringsEqual(t, got.Options[0].Title, (*question.Options)[0])
+	})
+
+	t.Run("question without options", func(t *testing.T) {
+		question := QuestionPostRequest{
+			Title:   "foo",
+			Type:    "number",
+			Options: nil,
+		}
+
+		got := store.AddQuestion(categoryID, question)
+
+		// assert response
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, question.Title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, question.Type)
+		if got.Options != nil {
+			t.Fatal("options should not be present")
+		}
+
+		// assert store
+		got = store.questionList.Questions[1]
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, question.Title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, question.Type)
+		if got.Options != nil {
+			t.Fatal("options should not be present")
+		}
+	})
 }
 
 func TestInMemoryQuestionStore_RenameQuestion(t *testing.T) {

@@ -30,7 +30,7 @@ func (s *InMemoryQuestionStore) AddQuestion(categoryID string, q QuestionPostReq
 
 	if q.Type == "string" {
 		question.Options = OptionList{}
-		for _, title := range q.Options {
+		for _, title := range *q.Options {
 			option := Option{
 				ID:    xid.New().String(),
 				Title: title,

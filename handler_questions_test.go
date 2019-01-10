@@ -96,18 +96,65 @@ func TestAddQuestion(t *testing.T) {
 		server := NewServer(categoryStore, questionStore)
 
 		cases := map[string]struct {
-			path  string
-			input string
-			want  int
+			path       string
+			input      string
+			want       int
+			errorTitle string
 		}{
-			"invalid json":             {path: "/categories/1234/questions", input: `{"foo":""}`, want: http.StatusBadRequest},
-			"title is empty":           {path: "/categories/1234/questions", input: `{"title":"", "type":"number"}`, want: http.StatusBadRequest},
-			"title is duplicate":       {path: "/categories/1234/questions", input: `{"title":"how many nights?", "type":"number"}`, want: http.StatusConflict},
-			"type is empty":            {path: "/categories/1234/questions", input: `{"title":"foo", "type":""}`, want: http.StatusBadRequest},
-			"type doesn't exist":       {path: "/categories/1234/questions", input: `{"title":"foo", "type":"foo"}`, want: http.StatusBadRequest},
-			"options is not list type": {path: "/categories/1234/questions", input: `{"title":"foo", "type":"string", "options":""}`, want: http.StatusBadRequest},
-			"options had duplicate":    {path: "/categories/1234/questions", input: `{"title":"foo", "type":"string", "options":["foo", "foo"]}`, want: http.StatusBadRequest},
-			"category doesn't exist":   {path: "/categories/5678/questions", input: `{"title":"foo", "type":"string"}`, want: http.StatusNotFound},
+			"invalid json": {
+				path:       "/categories/1234/questions",
+				input:      `{"foo":`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorInvalidJSON,
+			},
+			"title is empty": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"", "type":"number"}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorTitleEmpty,
+			},
+			"title is duplicate": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"how many nights?", "type":"number"}`,
+				want:       http.StatusConflict,
+				errorTitle: ErrorDuplicateTitle,
+			},
+			"type is empty": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"foo", "type":""}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorTypeEmpty,
+			},
+			"type doesn't exist": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"foo", "type":"foo"}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorInvalidType,
+			},
+			"options is not list type": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"foo", "type":"string", "options":""}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorOptionsInvalid,
+			},
+			"options has duplicate": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"foo", "type":"string", "options":["foo", "foo"]}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorDuplicateOption,
+			},
+			"options contains empty string": {
+				path:       "/categories/1234/questions",
+				input:      `{"title":"foo", "type":"string", "options":[""]}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorOptionEmpty,
+			},
+			"category doesn't exist": {
+				path:       "/categories/5678/questions",
+				input:      `{"title":"foo", "type":"string"}`,
+				want:       http.StatusNotFound,
+				errorTitle: ErrorCategoryNotFound,
+			},
 		}
 
 		for name, c := range cases {
@@ -124,7 +171,7 @@ func TestAddQuestion(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := questionStore.questionList
@@ -190,8 +237,8 @@ func TestAddQuestion(t *testing.T) {
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
-		title := "which meal?"
-		optionType := "string"
+		title := "what number?"
+		optionType := "number"
 
 		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s"}`, title, optionType)
 		requestBody := strings.NewReader(jsonReq)
@@ -214,7 +261,57 @@ func TestAddQuestion(t *testing.T) {
 		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
-		// Options should be an empty list in response
+		if got.Options != nil {
+			t.Fatal("options should not be present")
+		}
+
+		// check the store has been modified
+		got = questionStore.questionList.Questions[0]
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, optionType)
+		if got.Options != nil {
+			t.Fatal("options should not be present")
+		}
+
+		// get ID from store and check that's in returned Location header
+		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s/questions/%s", categoryID, got.ID))
+	})
+
+	t.Run("add type:string question with empty options", func(t *testing.T) {
+		questionList := QuestionList{
+			Questions: []Question{},
+		}
+		questionStore := NewInMemoryQuestionStore(questionList)
+		server := NewServer(nil, questionStore)
+
+		categoryID := "1"
+		title := "which meal?"
+		optionType := "string"
+
+		jsonReq := fmt.Sprintf(`{"title":"%s", "type":"%s", "options":[]}`, title, optionType)
+		requestBody := strings.NewReader(jsonReq)
+		path := fmt.Sprintf("/categories/%s/questions", categoryID)
+		req := newPostRequest(t, path, requestBody)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+		body := readBodyBytes(t, result.Body)
+
+		assertStatusCode(t, result.StatusCode, http.StatusCreated)
+		assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
+		assertBodyIsJSON(t, body)
+
+		got := unmarshallQuestionFromBody(t, body)
+
+		// check the response
+		assertIsXid(t, got.ID)
+		assertStringsEqual(t, got.Title, title)
+		assertStringsEqual(t, got.CategoryID, categoryID)
+		assertStringsEqual(t, got.Type, optionType)
+		// options should be an empty list
 		assertDeepEqual(t, got.Options, OptionList{})
 
 		// check the store has been modified
@@ -311,16 +408,53 @@ func TestRenameQuestion(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
-			path  string
-			input string
-			want  int
+			path       string
+			input      string
+			want       int
+			errorTitle string
 		}{
-			"invalid json":                         {path: "/categories/1234/questions/1", input: `{"foo":""}`, want: http.StatusBadRequest},
-			"invalid title":                        {path: "/categories/1234/questions/1", input: `{"title":"foo/*!bar"}`, want: http.StatusUnprocessableEntity},
-			"duplicate title":                      {path: "/categories/1234/questions/1", input: `{"title":"how much nougat?"}`, want: http.StatusConflict},
-			"category doesn't exist":               {path: "/categories/5678/questions/1", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
-			"ID not found":                         {path: "/categories/1234/questions/4", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
-			"question does not belong to category": {path: "/categories/1234/questions/3", input: `{"title":"irrelevant"}`, want: http.StatusNotFound},
+			"invalid json": {
+				path:       "/categories/1234/questions/1",
+				input:      `{"foo":}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorInvalidJSON,
+			},
+			"missing title": {
+				path:       "/categories/1234/questions/1",
+				input:      `{}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorFieldMissing,
+			},
+			"invalid title": {
+				path:       "/categories/1234/questions/1",
+				input:      `{"title":"foo/*!bar"}`,
+				want:       http.StatusUnprocessableEntity,
+				errorTitle: ErrorInvalidTitle,
+			},
+			"duplicate title": {
+				path:       "/categories/1234/questions/1",
+				input:      `{"title":"how much nougat?"}`,
+				want:       http.StatusConflict,
+				errorTitle: ErrorDuplicateTitle,
+			},
+			"category doesn't exist": {
+				path:       "/categories/5678/questions/1",
+				input:      `{"title":"irrelevant"}`,
+				want:       http.StatusNotFound,
+				errorTitle: ErrorCategoryNotFound,
+			},
+			"ID not found": {
+				path:       "/categories/1234/questions/4",
+				input:      `{"title":"irrelevant"}`,
+				want:       http.StatusNotFound,
+				errorTitle: ErrorQuestionNotFound,
+			},
+			"question does not belong to category": {
+				path:       "/categories/1234/questions/3",
+				input:      `{"title":"irrelevant"}`,
+				want:       http.StatusNotFound,
+				errorTitle: ErrorQuestionDoesntBelongToCategory,
+			},
 		}
 
 		for name, c := range cases {
@@ -337,7 +471,7 @@ func TestRenameQuestion(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := questionStore.questionList
@@ -399,12 +533,25 @@ func TestRemoveQuestion(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
-			path string
-			want int
+			path       string
+			want       int
+			errorTitle string
 		}{
-			"category doesn't exist":              {path: "/categories/5678/questions/2", want: http.StatusNotFound},
-			"question doesn't exist":              {path: "/categories/1234/questions/2", want: http.StatusNotFound},
-			"question doesn't belong to category": {path: "/categories/2345/questions/1", want: http.StatusNotFound},
+			"category doesn't exist": {
+				path:       "/categories/5678/questions/2",
+				want:       http.StatusNotFound,
+				errorTitle: ErrorCategoryNotFound,
+			},
+			"question doesn't exist": {
+				path:       "/categories/1234/questions/2",
+				want:       http.StatusNotFound,
+				errorTitle: ErrorQuestionNotFound,
+			},
+			"question doesn't belong to category": {
+				path:       "/categories/2345/questions/1",
+				want:       http.StatusNotFound,
+				errorTitle: ErrorQuestionDoesntBelongToCategory,
+			},
 		}
 
 		for name, c := range cases {
@@ -420,7 +567,7 @@ func TestRemoveQuestion(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := questionStore.questionList
