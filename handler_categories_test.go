@@ -380,10 +380,15 @@ func TestRemoveCategory(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
-			input string
-			want  int
+			input      string
+			want       int
+			errorTitle string
 		}{
-			"category not found": {input: "5678", want: http.StatusNotFound},
+			"category not found": {
+				input:      "5678",
+				want:       http.StatusNotFound,
+				errorTitle: ErrorCategoryNotFound,
+			},
 		}
 
 		for name, c := range cases {
@@ -399,7 +404,7 @@ func TestRemoveCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := store.categories

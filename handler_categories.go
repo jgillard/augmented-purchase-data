@@ -217,7 +217,7 @@ func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Reques
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorCategoryNotFound))
 		return
 	}
 
