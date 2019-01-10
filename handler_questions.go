@@ -244,7 +244,7 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 
 	c.questionStore.DeleteQuestion(questionID)
 
-	payload := marshallResponse(jsonStatus{"deleted"})
+	payload := marshallResponse(jsonStatus{StatusDeleted})
 
 	res.WriteHeader(http.StatusOK)
 	res.Write(payload)

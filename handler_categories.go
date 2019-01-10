@@ -196,7 +196,7 @@ func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Reques
 
 	c.categoryStore.DeleteCategory(categoryID)
 
-	payload := marshallResponse(jsonStatus{"deleted"})
+	payload := marshallResponse(jsonStatus{StatusDeleted})
 
 	res.WriteHeader(http.StatusOK)
 	res.Write(payload)

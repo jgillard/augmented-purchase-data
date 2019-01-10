@@ -13,10 +13,9 @@ func TestStatusHandler(t *testing.T) {
 
 	server.ServeHTTP(res, req)
 	result := res.Result()
-	body := readBodyBytes(t, result.Body)
+	body := readBodyJSON(t, result.Body)
 
 	assertStatusCode(t, result.StatusCode, http.StatusOK)
-	assertBodyIsJSON(t, body)
 
 	var got jsonStatus
 	unmarshallInterfaceFromBody(t, body, &got)

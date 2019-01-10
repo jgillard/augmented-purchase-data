@@ -19,7 +19,7 @@ type Middleware struct {
 }
 
 func (m *Middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set("Content-Type", jsonContentType)
+	res.Header().Set(ContentTypeKey, jsonContentType)
 	m.handler.ServeHTTP(res, req)
 }
 

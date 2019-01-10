@@ -66,20 +66,12 @@ func assertDeepEqual(t *testing.T, got, want interface{}) {
 
 var assertStatusCode = assertNumbersEqual
 var assertContentType = assertStringsEqual
-var assertBodyString = assertStringsEqual
 
 func assertIsXid(t *testing.T, s string) {
 	t.Helper()
 	_, err := xid.FromString(s)
 	if err != nil {
 		t.Fatalf("got ID '%s' which isn't an xid", s)
-	}
-}
-
-func assertBodyEmptyJSON(t *testing.T, got []byte) {
-	t.Helper()
-	if string(got) != "{}" {
-		t.Errorf("wanted an empty json body, got '%s'", got)
 	}
 }
 
@@ -92,16 +84,25 @@ func assertBodyJSONIsStatus(t *testing.T, got []byte, want string) {
 	}
 }
 
-func readBodyBytes(t *testing.T, b io.ReadCloser) []byte {
+func readBodyJSON(t *testing.T, b io.ReadCloser) []byte {
 	t.Helper()
 	body, err := ioutil.ReadAll(b)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return body
+
+	// this probably shouldn't live here...
+	// checks that the body is JSON
+	var js json.RawMessage
+	if json.Unmarshal(body, &js) != nil {
+		t.Fatalf("body is not json")
+	}
+
+	return js
 }
 
 func unmarshallInterfaceFromBody(t *testing.T, bodyBytes []byte, got interface{}) interface{} {
+	t.Helper()
 	err := json.Unmarshal(bodyBytes, got)
 	// check for syntax error or type mismatch
 	if err != nil {
@@ -112,15 +113,8 @@ func unmarshallInterfaceFromBody(t *testing.T, bodyBytes []byte, got interface{}
 
 }
 
-func assertBodyIsJSON(t *testing.T, bodyBytes []byte) {
-	var js json.RawMessage
-
-	if json.Unmarshal(bodyBytes, &js) != nil {
-		t.Fatalf("body is not json")
-	}
-}
-
 func assertBodyErrorTitle(t *testing.T, bodyBytes []byte, title string) {
+	t.Helper()
 	var errors jsonErrors
 
 	err := json.Unmarshal(bodyBytes, &errors)
@@ -136,4 +130,11 @@ func assertBodyErrorTitle(t *testing.T, bodyBytes []byte, title string) {
 
 	assertStringsEqual(t, errors.Errors[0].Title, title)
 
+}
+
+func assertOptionsNil(t *testing.T, got OptionList) {
+	t.Helper()
+	if got != nil {
+		t.Fatalf("Options should not have been set, got %v", got)
+	}
 }

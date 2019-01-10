@@ -26,6 +26,11 @@ type jsonErrors struct {
 	Errors []jsonError `json:"errors"`
 }
 
+const (
+	ContentTypeKey = "Content-Type"
+	StatusDeleted  = "deleted"
+)
+
 func jsonIsValid(body []byte) bool {
 	var js struct{}
 	return json.Unmarshal(body, &js) == nil
