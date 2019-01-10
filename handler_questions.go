@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"reflect"
 	"regexp"
 
 	"github.com/julienschmidt/httprouter"
@@ -258,7 +257,8 @@ func IsValidQuestionTitle(title string) bool {
 }
 
 func ensureJSONFieldsPresent(res http.ResponseWriter, got, desired interface{}) bool {
-	if reflect.DeepEqual(got, desired) {
+	// if after unmarshall got is empty...
+	if got == desired {
 		fmt.Println("json field(s) missing from request")
 		res.WriteHeader(http.StatusBadRequest)
 		return false

@@ -42,7 +42,6 @@ type CategoryGetResponse struct {
 
 // is this a very odd thing to do?
 type CategoryPostRequest struct {
-	ID       string  `json:"id"`
 	Name     string  `json:"name"`
 	ParentID *string `json:"parentID"`
 }
@@ -64,7 +63,13 @@ type jsonErrors struct {
 }
 
 const (
-	CategoryNotFound = "categoryID not found"
+	ErrorCategoryNotFound      = "categoryID not found"
+	ErrorInvalidJSON           = "request JSON invalid"
+	ErrorFieldMissing          = "a required field is missing from the request"
+	ErrorDuplicateCategoryName = "name is a duplicate"
+	ErrorInvalidCategoryName   = "name is invalid"
+	ErrorParentIDNotFound      = "parentID not found"
+	ErrorCategoryTooNested     = "category would be too nested"
 )
 
 func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
@@ -82,10 +87,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
 		res.WriteHeader(http.StatusNotFound)
-		errorResponse := jsonErrors{}
-		errorResponse.Errors = append(errorResponse.Errors, jsonError{CategoryNotFound})
-		payload := marshallResponse(errorResponse)
-		res.Write(payload)
+		res.Write(craftErrorPayload(ErrorCategoryNotFound))
 		return
 	}
 
@@ -100,32 +102,38 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 		log.Fatal(err)
 	}
 
+	if !jsonIsValid(requestBody) {
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write(craftErrorPayload(ErrorInvalidJSON))
+		return
+	}
+
 	var got CategoryPostRequest
 	UnmarshallRequest(requestBody, &got)
 
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorFieldMissing))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorDuplicateCategoryName))
 		return
 	}
 
 	if !IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
 		return
 	}
 
 	// parentID not supplied
 	if got.ParentID == nil {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorFieldMissing))
 		return
 	}
 
@@ -133,7 +141,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	if !c.categoryStore.categoryParentIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorParentIDNotFound))
 		return
 	}
 
@@ -141,7 +149,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	// we currently confine to 2 levels of categories
 	if c.categoryStore.getCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write([]byte("{}"))
+		res.Write(craftErrorPayload(ErrorCategoryTooNested))
 		return
 	}
 
@@ -239,12 +247,24 @@ func marshallResponse(data interface{}) []byte {
 	return payload
 }
 
+func jsonIsValid(body []byte) bool {
+	var js struct{}
+	return json.Unmarshal(body, &js) == nil
+}
+
 func UnmarshallRequest(body []byte, got interface{}) {
 	err := json.Unmarshal(body, got)
 	// json.unmarshall will not error if fields don't match
-	// however got will be an empty struct, check that below
+	// the error below will catch invalid json
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+}
+
+func craftErrorPayload(errorString string) []byte {
+	errorResponse := jsonErrors{}
+	errorResponse.Errors = append(errorResponse.Errors, jsonError{errorString})
+	payload := marshallResponse(errorResponse)
+	return payload
 }

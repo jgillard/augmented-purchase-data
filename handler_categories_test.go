@@ -132,16 +132,45 @@ func TestAddCategory(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
 		cases := map[string]struct {
-			input string
-			want  int
+			input      string
+			want       int
+			errorTitle string
 		}{
-			"invalid json":                     {input: `{"foo":""}`, want: http.StatusBadRequest},
-			"name missing":                     {input: `{}`, want: http.StatusBadRequest},
-			"duplicate name":                   {input: `{"name":"existing category name"}`, want: http.StatusConflict},
-			"invalid name":                     {input: `{"name":"abc123!@£"}`, want: http.StatusUnprocessableEntity},
-			"parentID missing":                 {input: `{"name":"valid name"}`, want: http.StatusBadRequest},
-			"parentID doesn't exist":           {input: `{"parentID":"5678"}`, want: http.StatusUnprocessableEntity},
-			"category would be >2 levels deep": {input: `{"name":"foo", "parentID":"2345"}`, want: http.StatusUnprocessableEntity},
+			"invalid json": {
+				input:      `"foo"`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorInvalidJSON,
+			},
+			"name missing": {
+				input:      `{}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorFieldMissing,
+			},
+			"duplicate name": {
+				input:      `{"name":"existing category name"}`,
+				want:       http.StatusConflict,
+				errorTitle: ErrorDuplicateCategoryName,
+			},
+			"invalid name": {
+				input:      `{"name":"abc123!@£"}`,
+				want:       http.StatusUnprocessableEntity,
+				errorTitle: ErrorInvalidCategoryName,
+			},
+			"parentID missing": {
+				input:      `{"name":"valid name"}`,
+				want:       http.StatusBadRequest,
+				errorTitle: ErrorFieldMissing,
+			},
+			"parentID doesn't exist": {
+				input:      `{"name":"foo", "parentID":"5678"}`,
+				want:       http.StatusUnprocessableEntity,
+				errorTitle: ErrorParentIDNotFound,
+			},
+			"category would be >2 levels deep": {
+				input:      `{"name":"foo", "parentID":"2345"}`,
+				want:       http.StatusUnprocessableEntity,
+				errorTitle: ErrorCategoryTooNested,
+			},
 		}
 
 		for name, c := range cases {
@@ -158,7 +187,7 @@ func TestAddCategory(t *testing.T) {
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get("Content-Type"), jsonContentType)
 				assertBodyIsJSON(t, body)
-				assertBodyEmptyJSON(t, body)
+				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
 				got := store.categories
