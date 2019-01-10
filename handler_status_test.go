@@ -21,5 +21,4 @@ func TestStatusHandler(t *testing.T) {
 	unmarshallInterfaceFromBody(t, body, &got)
 	want := jsonStatus{"OK"}
 	assertDeepEqual(t, got, want)
-
 }

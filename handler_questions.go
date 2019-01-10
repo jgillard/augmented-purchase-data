@@ -47,6 +47,8 @@ type Option struct {
 	Title string `json:"title"`
 }
 
+const questionTitleRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
+
 var possibleOptionTypes = []string{"string", "number"}
 
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
@@ -75,22 +77,19 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 
 	var got QuestionPostRequest
 	err = json.Unmarshal(requestBody, &got)
-	// json.unmarshall will not error if fields don't match
-	// however got will be an empty struct, check that below
 	if err != nil {
-		// however it does blow if options is not the correct shape, so catch that here
+		// json.unmarshall explodes if options is not the correct shape, so catch that here
 		switch t := err.(type) {
 		case *json.UnmarshalTypeError:
 			if t.Field == "options" {
 				fmt.Println(`"options" object is wrong shape`)
 				res.WriteHeader(http.StatusBadRequest)
 				res.Write(craftErrorPayload(ErrorOptionsInvalid))
-				return
 			}
 		default:
 			log.Fatal(err)
-			return
 		}
+		return
 	}
 
 	if !ensureJSONFieldsPresent(res, got, QuestionPostRequest{}) {
@@ -113,6 +112,7 @@ func (c *Server) QuestionPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
+	// perform checks on nested options object
 	if got.Options != nil {
 		for _, opt := range *got.Options {
 			if !ensureStringFieldNonEmpty(res, "options", opt) {
@@ -257,8 +257,7 @@ func isValidQuestionTitle(title string) bool {
 		isValid = false
 	}
 
-	questionRegex := `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
-	isLetterOrWhitespace := regexp.MustCompile(questionRegex).MatchString
+	isLetterOrWhitespace := regexp.MustCompile(questionTitleRegex).MatchString
 	if !isLetterOrWhitespace(title) {
 		isValid = false
 	}

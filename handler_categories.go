@@ -45,17 +45,19 @@ type CategoryPostRequest struct {
 	ParentID *string `json:"parentID"`
 }
 
+const categoryNameRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
+
 func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	// GET the list of categories
 	categoryList := c.categoryStore.ListCategories()
+
 	payload := marshallResponse(categoryList)
 
 	res.Write(payload)
 }
 
 func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// GET a specific category
 	categoryID := ps.ByName("category")
+
 	category := c.categoryStore.GetCategory(categoryID)
 
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
@@ -209,8 +211,7 @@ func isValidCategoryName(name string) bool {
 		isValid = false
 	}
 
-	stringRegex := `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
-	isLetterOrWhitespace := regexp.MustCompile(stringRegex).MatchString
+	isLetterOrWhitespace := regexp.MustCompile(categoryNameRegex).MatchString
 	if !isLetterOrWhitespace(name) {
 		isValid = false
 	}
