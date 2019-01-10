@@ -47,24 +47,7 @@ type Option struct {
 	Title string `json:"title"`
 }
 
-type jsonTitle struct {
-	Title string `json:"title"`
-}
-
 var possibleOptionTypes = []string{"string", "number"}
-
-const (
-	ErrorTitleEmpty                     = "title is empty"
-	ErrorDuplicateTitle                 = "title is a duplicate"
-	ErrorTypeEmpty                      = "type is empty"
-	ErrorInvalidType                    = "type is invalid"
-	ErrorOptionEmpty                    = "option is empty"
-	ErrorOptionsInvalid                 = "options is invalid"
-	ErrorDuplicateOption                = "options list has a duplicate"
-	ErrorInvalidTitle                   = "title is invalid"
-	ErrorQuestionNotFound               = "question not found"
-	ErrorQuestionDoesntBelongToCategory = "question does not belong to category"
-)
 
 func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
@@ -183,7 +166,7 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 	}
 
 	var got jsonTitle
-	UnmarshallRequest(requestBody, &got)
+	unmarshallRequest(requestBody, &got)
 
 	questionTitle := got.Title
 
@@ -192,7 +175,7 @@ func (c *Server) QuestionPatchHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if !IsValidQuestionTitle(questionTitle) {
+	if !isValidQuestionTitle(questionTitle) {
 		fmt.Println(`"title" is not a valid string`)
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		res.Write(craftErrorPayload(ErrorInvalidTitle))
@@ -267,7 +250,7 @@ func (c *Server) QuestionDeleteHandler(res http.ResponseWriter, req *http.Reques
 	res.Write(payload)
 }
 
-func IsValidQuestionTitle(title string) bool {
+func isValidQuestionTitle(title string) bool {
 	isValid := true
 
 	if len(title) == 0 || len(title) > 32 {
@@ -281,60 +264,4 @@ func IsValidQuestionTitle(title string) bool {
 	}
 
 	return isValid
-}
-
-func ensureJSONFieldsPresent(res http.ResponseWriter, got, desired interface{}) bool {
-	// if after unmarshall got is empty...
-	if got == desired {
-		fmt.Println("json field(s) missing from request")
-		res.WriteHeader(http.StatusBadRequest)
-		return false
-	}
-	return true
-}
-
-func ensureStringFieldNonEmpty(res http.ResponseWriter, key, title string) bool {
-	if title == "" {
-		fmt.Println(fmt.Sprintf(`"%s" missing from request`, key))
-		res.WriteHeader(http.StatusBadRequest)
-		return false
-	}
-	return true
-}
-
-func ensureStringFieldTitle(res http.ResponseWriter, key, title string, possibleOptionTypes []string) bool {
-	isValid := false
-
-	for _, possible := range possibleOptionTypes {
-		if title == possible {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
-		fmt.Printf(`"%s" must be one of %v`, key, possibleOptionTypes)
-		res.WriteHeader(http.StatusBadRequest)
-	}
-
-	return isValid
-}
-
-func ensureNoDuplicates(res http.ResponseWriter, key string, strings []string) bool {
-	noDuplicates := true
-
-	counts := make(map[string]int)
-	for _, str := range strings {
-		counts[str]++
-	}
-
-	for _, count := range counts {
-		if count > 1 {
-			fmt.Printf(`"%s" contains duplicate strings`, key)
-			res.WriteHeader(http.StatusBadRequest)
-			noDuplicates = false
-		}
-	}
-
-	return noDuplicates
 }

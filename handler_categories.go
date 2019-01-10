@@ -1,7 +1,6 @@
 package transactioncategories
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -46,32 +45,6 @@ type CategoryPostRequest struct {
 	ParentID *string `json:"parentID"`
 }
 
-type jsonID struct {
-	ID string `json:"id"`
-}
-
-type jsonName struct {
-	Name string `json:"name"`
-}
-
-type jsonError struct {
-	Title string `json:"title"`
-}
-
-type jsonErrors struct {
-	Errors []jsonError `json:"errors"`
-}
-
-const (
-	ErrorCategoryNotFound      = "categoryID not found"
-	ErrorInvalidJSON           = "request JSON invalid"
-	ErrorFieldMissing          = "a required field is missing from the request"
-	ErrorDuplicateCategoryName = "name is a duplicate"
-	ErrorInvalidCategoryName   = "name is invalid"
-	ErrorParentIDNotFound      = "parentID not found"
-	ErrorCategoryTooNested     = "category would be too nested"
-)
-
 func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	// GET the list of categories
 	categoryList := c.categoryStore.ListCategories()
@@ -109,7 +82,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	}
 
 	var got CategoryPostRequest
-	UnmarshallRequest(requestBody, &got)
+	unmarshallRequest(requestBody, &got)
 
 	categoryName := got.Name
 
@@ -124,7 +97,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	if !IsValidCategoryName(categoryName) {
+	if !isValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
 		return
@@ -177,7 +150,7 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	}
 
 	var got jsonName
-	UnmarshallRequest(requestBody, &got)
+	unmarshallRequest(requestBody, &got)
 
 	categoryName := got.Name
 
@@ -198,7 +171,7 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if !IsValidCategoryName(categoryName) {
+	if !isValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
 		return
@@ -229,7 +202,7 @@ func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Reques
 	res.Write(payload)
 }
 
-func IsValidCategoryName(name string) bool {
+func isValidCategoryName(name string) bool {
 	isValid := true
 
 	if len(name) == 0 || len(name) > 32 {
@@ -243,34 +216,4 @@ func IsValidCategoryName(name string) bool {
 	}
 
 	return isValid
-}
-
-func marshallResponse(data interface{}) []byte {
-	payload, err := json.Marshal(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return payload
-}
-
-func jsonIsValid(body []byte) bool {
-	var js struct{}
-	return json.Unmarshal(body, &js) == nil
-}
-
-func UnmarshallRequest(body []byte, got interface{}) {
-	err := json.Unmarshal(body, got)
-	// json.unmarshall will not error if fields don't match
-	// the error below will catch invalid json
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-}
-
-func craftErrorPayload(errorString string) []byte {
-	errorResponse := jsonErrors{}
-	errorResponse.Errors = append(errorResponse.Errors, jsonError{errorString})
-	payload := marshallResponse(errorResponse)
-	return payload
 }

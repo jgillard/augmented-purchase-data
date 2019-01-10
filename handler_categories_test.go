@@ -435,7 +435,7 @@ func TestRemoveCategory(t *testing.T) {
 	})
 }
 
-func testIsValidCategoryName(t *testing.T) {
+func testisValidCategoryName(t *testing.T) {
 	cases := map[string]string{
 		"empty string":         "",
 		"only whitespace":      "     ",
@@ -448,7 +448,7 @@ func testIsValidCategoryName(t *testing.T) {
 
 	for name, value := range cases {
 		t.Run(fmt.Sprintf("name must not be %s", name), func(t *testing.T) {
-			got := IsValidCategoryName(value)
+			got := isValidCategoryName(value)
 			want := false
 
 			if got != want {
