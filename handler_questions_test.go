@@ -75,6 +75,69 @@ func TestListQuestionsForCategory(t *testing.T) {
 	})
 }
 
+func TestGetQuestion(t *testing.T) {
+
+	questionList := QuestionList{
+		Questions: []Question{
+			Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+				{ID: "1", Title: "brekkie"},
+			}},
+		},
+	}
+	questionStore := NewInMemoryQuestionStore(questionList)
+	server := NewServer(nil, questionStore)
+
+	t.Run("test failure responses & effect", func(t *testing.T) {
+		cases := map[string]struct {
+			path       string
+			want       int
+			errorTitle string
+		}{
+			"ID not found": {
+				path:       "/categories/5678/questions/1",
+				want:       http.StatusNotFound,
+				errorTitle: ErrorQuestionNotFound,
+			},
+		}
+
+		for name, c := range cases {
+			t.Run(name, func(t *testing.T) {
+				req := newGetRequest(t, c.path)
+				res := httptest.NewRecorder()
+
+				server.ServeHTTP(res, req)
+				result := res.Result()
+				body := readBodyJSON(t, result.Body)
+
+				assertStatusCode(t, result.StatusCode, c.want)
+				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertBodyErrorTitle(t, body, c.errorTitle)
+			})
+		}
+	})
+
+	t.Run("get category with children", func(t *testing.T) {
+		req := newGetRequest(t, "/categories/5678/questions/2")
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+		result := res.Result()
+		body := readBodyJSON(t, result.Body)
+
+		// check the response
+		assertStatusCode(t, result.StatusCode, http.StatusOK)
+		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+
+		var got Question
+		unmarshallInterfaceFromBody(t, body, &got)
+		assertStringsEqual(t, got.ID, questionList.Questions[0].ID)
+		assertStringsEqual(t, got.Title, questionList.Questions[0].Title)
+		assertStringsEqual(t, got.CategoryID, questionList.Questions[0].CategoryID)
+		assertStringsEqual(t, got.Type, questionList.Questions[0].Type)
+		assertDeepEqual(t, got.Options, questionList.Questions[0].Options)
+	})
+}
+
 func TestAddQuestion(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -476,7 +539,6 @@ func TestRenameQuestion(t *testing.T) {
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
 				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
-
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
