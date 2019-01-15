@@ -10,11 +10,11 @@ func NewInMemoryCategoryStore(c CategoryList) *InMemoryCategoryStore {
 	return &InMemoryCategoryStore{c}
 }
 
-func (s *InMemoryCategoryStore) ListCategories() CategoryList {
+func (s *InMemoryCategoryStore) listCategories() CategoryList {
 	return s.categories
 }
 
-func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
+func (s *InMemoryCategoryStore) getCategory(id string) CategoryGetResponse {
 	category := Category{}
 	for _, c := range s.categories.Categories {
 		if c.ID == id {
@@ -40,7 +40,7 @@ func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
 	return response
 }
 
-func (s *InMemoryCategoryStore) AddCategory(categoryName, parentID string) Category {
+func (s *InMemoryCategoryStore) addCategory(categoryName, parentID string) Category {
 	newCat := Category{
 		ID:       xid.New().String(),
 		Name:     categoryName,
@@ -52,7 +52,7 @@ func (s *InMemoryCategoryStore) AddCategory(categoryName, parentID string) Categ
 	return newCat
 }
 
-func (s *InMemoryCategoryStore) RenameCategory(id, name string) Category {
+func (s *InMemoryCategoryStore) renameCategory(id, name string) Category {
 	index := 0
 
 	for i, c := range s.categories.Categories {
@@ -66,7 +66,7 @@ func (s *InMemoryCategoryStore) RenameCategory(id, name string) Category {
 	return s.categories.Categories[index]
 }
 
-func (s *InMemoryCategoryStore) DeleteCategory(id string) {
+func (s *InMemoryCategoryStore) deleteCategory(id string) {
 	index := 0
 
 	for i, c := range s.categories.Categories {

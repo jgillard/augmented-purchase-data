@@ -32,7 +32,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -49,7 +49,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -66,7 +66,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -96,7 +96,7 @@ func TestGetQuestion(t *testing.T) {
 			"ID not found": {
 				path:       "/categories/5678/questions/1",
 				want:       http.StatusNotFound,
-				errorTitle: ErrorQuestionNotFound,
+				errorTitle: errorQuestionNotFound,
 			},
 		}
 
@@ -110,7 +110,7 @@ func TestGetQuestion(t *testing.T) {
 				body := readBodyJSON(t, result.Body)
 
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 				assertBodyErrorTitle(t, body, c.errorTitle)
 			})
 		}
@@ -126,7 +126,7 @@ func TestGetQuestion(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Question
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -168,55 +168,55 @@ func TestAddQuestion(t *testing.T) {
 				path:       "/categories/1234/questions",
 				input:      `{"foo":`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorInvalidJSON,
+				errorTitle: errorInvalidJSON,
 			},
 			"title is empty": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"", "type":"number"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorTitleEmpty,
+				errorTitle: errorTitleEmpty,
 			},
 			"title is duplicate": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"how many nights?", "type":"number"}`,
 				want:       http.StatusConflict,
-				errorTitle: ErrorDuplicateTitle,
+				errorTitle: errorDuplicateTitle,
 			},
 			"type is empty": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":""}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorTypeEmpty,
+				errorTitle: errorTypeEmpty,
 			},
 			"type doesn't exist": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"foo"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorInvalidType,
+				errorTitle: errorInvalidType,
 			},
 			"options is not list type": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":""}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorOptionsInvalid,
+				errorTitle: errorOptionsInvalid,
 			},
 			"options has duplicate": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":["foo", "foo"]}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorDuplicateOption,
+				errorTitle: errorDuplicateOption,
 			},
 			"options contains empty string": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":[""]}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorOptionEmpty,
+				errorTitle: errorOptionEmpty,
 			},
 			"category doesn't exist": {
 				path:       "/categories/5678/questions",
 				input:      `{"title":"foo", "type":"string"}`,
 				want:       http.StatusNotFound,
-				errorTitle: ErrorCategoryNotFound,
+				errorTitle: errorCategoryNotFound,
 			},
 		}
 
@@ -232,7 +232,7 @@ func TestAddQuestion(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
@@ -270,7 +270,7 @@ func TestAddQuestion(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Question
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -320,7 +320,7 @@ func TestAddQuestion(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Question
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -371,7 +371,7 @@ func TestAddQuestion(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Question
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -423,7 +423,7 @@ func TestAddQuestion(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Question
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -486,43 +486,43 @@ func TestRenameQuestion(t *testing.T) {
 				path:       "/categories/1234/questions/1",
 				input:      `{"foo":}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorInvalidJSON,
+				errorTitle: errorInvalidJSON,
 			},
 			"missing title": {
 				path:       "/categories/1234/questions/1",
 				input:      `{}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorFieldMissing,
+				errorTitle: errorFieldMissing,
 			},
 			"invalid title": {
 				path:       "/categories/1234/questions/1",
 				input:      `{"title":"foo/*!bar"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: ErrorInvalidTitle,
+				errorTitle: errorInvalidTitle,
 			},
 			"duplicate title": {
 				path:       "/categories/1234/questions/1",
 				input:      `{"title":"how much nougat?"}`,
 				want:       http.StatusConflict,
-				errorTitle: ErrorDuplicateTitle,
+				errorTitle: errorDuplicateTitle,
 			},
 			"category doesn't exist": {
 				path:       "/categories/5678/questions/1",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: ErrorCategoryNotFound,
+				errorTitle: errorCategoryNotFound,
 			},
 			"ID not found": {
 				path:       "/categories/1234/questions/4",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: ErrorQuestionNotFound,
+				errorTitle: errorQuestionNotFound,
 			},
 			"question does not belong to category": {
 				path:       "/categories/1234/questions/3",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: ErrorQuestionDoesntBelongToCategory,
+				errorTitle: errorQuestionDoesntBelongToCategory,
 			},
 		}
 
@@ -538,7 +538,7 @@ func TestRenameQuestion(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
@@ -564,7 +564,7 @@ func TestRenameQuestion(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var responseBody Question
 		unmarshallInterfaceFromBody(t, body, &responseBody)
@@ -608,17 +608,17 @@ func TestRemoveQuestion(t *testing.T) {
 			"category doesn't exist": {
 				path:       "/categories/5678/questions/2",
 				want:       http.StatusNotFound,
-				errorTitle: ErrorCategoryNotFound,
+				errorTitle: errorCategoryNotFound,
 			},
 			"question doesn't exist": {
 				path:       "/categories/1234/questions/2",
 				want:       http.StatusNotFound,
-				errorTitle: ErrorQuestionNotFound,
+				errorTitle: errorQuestionNotFound,
 			},
 			"question doesn't belong to category": {
 				path:       "/categories/2345/questions/1",
 				want:       http.StatusNotFound,
-				errorTitle: ErrorQuestionDoesntBelongToCategory,
+				errorTitle: errorQuestionDoesntBelongToCategory,
 			},
 		}
 
@@ -633,7 +633,7 @@ func TestRemoveQuestion(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
@@ -655,8 +655,8 @@ func TestRemoveQuestion(t *testing.T) {
 
 		// check response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
-		assertBodyJSONIsStatus(t, body, StatusDeleted)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
+		assertBodyJSONIsStatus(t, body, statusDeleted)
 
 		// check store is updated
 		got := len(questionStore.questionList.Questions)

@@ -12,7 +12,7 @@ func NewInMemoryQuestionStore(q QuestionList) *InMemoryQuestionStore {
 	return &InMemoryQuestionStore{q}
 }
 
-func (s *InMemoryQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {
+func (s *InMemoryQuestionStore) listQuestionsForCategory(categoryID string) QuestionList {
 	var questionList QuestionList
 	for _, q := range s.questionList.Questions {
 		if q.CategoryID == categoryID {
@@ -22,7 +22,7 @@ func (s *InMemoryQuestionStore) ListQuestionsForCategory(categoryID string) Ques
 	return questionList
 }
 
-func (s *InMemoryQuestionStore) GetQuestion(questionID string) Question {
+func (s *InMemoryQuestionStore) getQuestion(questionID string) Question {
 	var question = Question{}
 
 	for _, q := range s.questionList.Questions {
@@ -34,7 +34,7 @@ func (s *InMemoryQuestionStore) GetQuestion(questionID string) Question {
 	return question
 }
 
-func (s *InMemoryQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
+func (s *InMemoryQuestionStore) addQuestion(categoryID string, q QuestionPostRequest) Question {
 	question := Question{
 		ID:         xid.New().String(),
 		Title:      q.Title,
@@ -58,7 +58,7 @@ func (s *InMemoryQuestionStore) AddQuestion(categoryID string, q QuestionPostReq
 	return question
 }
 
-func (s *InMemoryQuestionStore) RenameQuestion(questionID, questionTitle string) Question {
+func (s *InMemoryQuestionStore) renameQuestion(questionID, questionTitle string) Question {
 	index := 0
 
 	for i, q := range s.questionList.Questions {
@@ -72,7 +72,7 @@ func (s *InMemoryQuestionStore) RenameQuestion(questionID, questionTitle string)
 	return s.questionList.Questions[index]
 }
 
-func (s *InMemoryQuestionStore) DeleteQuestion(questionID string) {
+func (s *InMemoryQuestionStore) deleteQuestion(questionID string) {
 	index := 0
 	for i, q := range s.questionList.Questions {
 		if q.ID == questionID {

@@ -30,7 +30,7 @@ func TestListCategories(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got CategoryList
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -69,8 +69,8 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
-		assertBodyErrorTitle(t, body, ErrorCategoryNotFound)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
+		assertBodyErrorTitle(t, body, errorCategoryNotFound)
 	})
 
 	t.Run("get category with children", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got CategoryGetResponse
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -108,7 +108,7 @@ func TestGetCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got CategoryGetResponse
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -139,37 +139,37 @@ func TestAddCategory(t *testing.T) {
 			"invalid json": {
 				input:      `"foo"`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorInvalidJSON,
+				errorTitle: errorInvalidJSON,
 			},
 			"name missing": {
 				input:      `{}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorFieldMissing,
+				errorTitle: errorFieldMissing,
 			},
 			"duplicate name": {
 				input:      `{"name":"existing category name"}`,
 				want:       http.StatusConflict,
-				errorTitle: ErrorDuplicateCategoryName,
+				errorTitle: errorDuplicateCategoryName,
 			},
 			"invalid name": {
 				input:      `{"name":"abc123!@£"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: ErrorInvalidCategoryName,
+				errorTitle: errorInvalidCategoryName,
 			},
 			"parentID missing": {
 				input:      `{"name":"valid name"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorFieldMissing,
+				errorTitle: errorFieldMissing,
 			},
 			"parentID doesn't exist": {
 				input:      `{"name":"foo", "parentID":"5678"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: ErrorParentIDNotFound,
+				errorTitle: errorParentIDNotFound,
 			},
 			"category would be >2 levels deep": {
 				input:      `{"name":"foo", "parentID":"2345"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: ErrorCategoryTooNested,
+				errorTitle: errorCategoryTooNested,
 			},
 		}
 
@@ -185,7 +185,7 @@ func TestAddCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
@@ -214,7 +214,7 @@ func TestAddCategory(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Category
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -251,7 +251,7 @@ func TestAddCategory(t *testing.T) {
 		body := readBodyJSON(t, result.Body)
 
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var got Category
 		unmarshallInterfaceFromBody(t, body, &got)
@@ -293,31 +293,31 @@ func TestRenameCategory(t *testing.T) {
 				ID:         "1234",
 				body:       `{"foo":`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorInvalidJSON,
+				errorTitle: errorInvalidJSON,
 			},
 			"name missing": {
 				ID:         "1234",
 				body:       `{"foo":"bar"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: ErrorFieldMissing,
+				errorTitle: errorFieldMissing,
 			},
 			"invalid name": {
 				ID:         "1234",
 				body:       `{"name":"foo/*!bar"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: ErrorInvalidCategoryName,
+				errorTitle: errorInvalidCategoryName,
 			},
 			"duplicate name": {
 				ID:         "1234",
 				body:       `{"name":"accommodation"}`,
 				want:       http.StatusConflict,
-				errorTitle: ErrorDuplicateCategoryName,
+				errorTitle: errorDuplicateCategoryName,
 			},
 			"ID not found": {
 				ID:         "5678",
 				body:       `{"name":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: ErrorCategoryNotFound,
+				errorTitle: errorCategoryNotFound,
 			},
 		}
 
@@ -333,7 +333,7 @@ func TestRenameCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
@@ -357,7 +357,7 @@ func TestRenameCategory(t *testing.T) {
 
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 		var responseBody Category
 		unmarshallInterfaceFromBody(t, body, &responseBody)
@@ -394,7 +394,7 @@ func TestRemoveCategory(t *testing.T) {
 			"category not found": {
 				input:      "5678",
 				want:       http.StatusNotFound,
-				errorTitle: ErrorCategoryNotFound,
+				errorTitle: errorCategoryNotFound,
 			},
 		}
 
@@ -409,7 +409,7 @@ func TestRemoveCategory(t *testing.T) {
 
 				// check the response
 				assertStatusCode(t, result.StatusCode, c.want)
-				assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
+				assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
@@ -431,8 +431,8 @@ func TestRemoveCategory(t *testing.T) {
 
 		// check response
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
-		assertContentType(t, result.Header.Get(ContentTypeKey), jsonContentType)
-		assertBodyJSONIsStatus(t, body, StatusDeleted)
+		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
+		assertBodyJSONIsStatus(t, body, statusDeleted)
 
 		// check store is updated
 		got := len(store.categories.Categories)

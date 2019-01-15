@@ -27,8 +27,8 @@ type jsonErrors struct {
 }
 
 const (
-	ContentTypeKey = "Content-Type"
-	StatusDeleted  = "deleted"
+	contentTypeKey = "Content-Type"
+	statusDeleted  = "deleted"
 )
 
 func jsonIsValid(body []byte) bool {

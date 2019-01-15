@@ -12,11 +12,11 @@ import (
 )
 
 type CategoryStore interface {
-	ListCategories() CategoryList
-	GetCategory(categoryID string) CategoryGetResponse
-	AddCategory(categoryName, parentID string) Category
-	RenameCategory(categoryID, categoryName string) Category
-	DeleteCategory(categoryID string)
+	listCategories() CategoryList
+	getCategory(categoryID string) CategoryGetResponse
+	addCategory(categoryName, parentID string) Category
+	renameCategory(categoryID, categoryName string) Category
+	deleteCategory(categoryID string)
 	categoryIDExists(categoryID string) bool
 	categoryNameExists(categoryName string) bool
 	categoryParentIDExists(categoryParentID string) bool
@@ -47,22 +47,22 @@ type CategoryPostRequest struct {
 
 const categoryNameRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
 
-func (c *Server) CategoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	categoryList := c.categoryStore.ListCategories()
+func (c *server) categoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	categoryList := c.categoryStore.listCategories()
 
 	payload := marshallResponse(categoryList)
 
 	res.Write(payload)
 }
 
-func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *server) categoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
-	category := c.categoryStore.GetCategory(categoryID)
+	category := c.categoryStore.getCategory(categoryID)
 
 	if reflect.DeepEqual(category, CategoryGetResponse{}) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(ErrorCategoryNotFound))
+		res.Write(craftErrorPayload(errorCategoryNotFound))
 		return
 	}
 
@@ -71,7 +71,7 @@ func (c *Server) CategoryGetHandler(res http.ResponseWriter, req *http.Request, 
 	res.Write(payload)
 }
 
-func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *server) categoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +79,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	if !jsonIsValid(requestBody) {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write(craftErrorPayload(ErrorInvalidJSON))
+		res.Write(craftErrorPayload(errorInvalidJSON))
 		return
 	}
 
@@ -89,26 +89,26 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
-		res.Write(craftErrorPayload(ErrorFieldMissing))
+		res.Write(craftErrorPayload(errorFieldMissing))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(ErrorDuplicateCategoryName))
+		res.Write(craftErrorPayload(errorDuplicateCategoryName))
 		return
 	}
 
 	if !isValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
+		res.Write(craftErrorPayload(errorInvalidCategoryName))
 		return
 	}
 
 	// parentID not supplied
 	if got.ParentID == nil {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write(craftErrorPayload(ErrorFieldMissing))
+		res.Write(craftErrorPayload(errorFieldMissing))
 		return
 	}
 
@@ -116,7 +116,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	if !c.categoryStore.categoryParentIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(ErrorParentIDNotFound))
+		res.Write(craftErrorPayload(errorParentIDNotFound))
 		return
 	}
 
@@ -124,11 +124,11 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	// we currently confine to 2 levels of categories
 	if c.categoryStore.getCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(ErrorCategoryTooNested))
+		res.Write(craftErrorPayload(errorCategoryTooNested))
 		return
 	}
 
-	category := c.categoryStore.AddCategory(categoryName, parentID)
+	category := c.categoryStore.addCategory(categoryName, parentID)
 
 	payload := marshallResponse(category)
 
@@ -137,7 +137,7 @@ func (c *Server) CategoryPostHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *server) categoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -147,7 +147,7 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 
 	if !jsonIsValid(requestBody) {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write(craftErrorPayload(ErrorInvalidJSON))
+		res.Write(craftErrorPayload(errorInvalidJSON))
 		return
 	}
 
@@ -157,29 +157,29 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
-		res.Write(craftErrorPayload(ErrorFieldMissing))
+		res.Write(craftErrorPayload(errorFieldMissing))
 		return
 	}
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(ErrorCategoryNotFound))
+		res.Write(craftErrorPayload(errorCategoryNotFound))
 		return
 	}
 
 	if c.categoryStore.categoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(ErrorDuplicateCategoryName))
+		res.Write(craftErrorPayload(errorDuplicateCategoryName))
 		return
 	}
 
 	if !isValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(ErrorInvalidCategoryName))
+		res.Write(craftErrorPayload(errorInvalidCategoryName))
 		return
 	}
 
-	category := c.categoryStore.RenameCategory(categoryID, categoryName)
+	category := c.categoryStore.renameCategory(categoryID, categoryName)
 
 	payload := marshallResponse(category)
 
@@ -187,18 +187,18 @@ func (c *Server) CategoryPatchHandler(res http.ResponseWriter, req *http.Request
 	res.Write(payload)
 }
 
-func (c *Server) CategoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *server) categoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	if !c.categoryStore.categoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(ErrorCategoryNotFound))
+		res.Write(craftErrorPayload(errorCategoryNotFound))
 		return
 	}
 
-	c.categoryStore.DeleteCategory(categoryID)
+	c.categoryStore.deleteCategory(categoryID)
 
-	payload := marshallResponse(jsonStatus{StatusDeleted})
+	payload := marshallResponse(jsonStatus{statusDeleted})
 
 	res.WriteHeader(http.StatusOK)
 	res.Write(payload)

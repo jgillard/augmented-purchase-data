@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type Server struct {
+type server struct {
 	categoryStore CategoryStore
 	questionStore QuestionStore
 	http.Handler
@@ -14,17 +14,17 @@ type Server struct {
 
 const jsonContentType = "application/json"
 
-type Middleware struct {
+type middleware struct {
 	handler http.Handler
 }
 
-func (m *Middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set(ContentTypeKey, jsonContentType)
+func (m *middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set(contentTypeKey, jsonContentType)
 	m.handler.ServeHTTP(res, req)
 }
 
-func NewServer(cats CategoryStore, questions QuestionStore) *Server {
-	p := new(Server)
+func NewServer(cats CategoryStore, questions QuestionStore) *server {
+	p := new(server)
 
 	p.categoryStore = cats
 	p.questionStore = questions
@@ -32,17 +32,17 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 	router := httprouter.New()
 	router.GET("/status", p.statusHandler)
 
-	router.GET("/categories", p.CategoryListHandler)
-	router.GET("/categories/:category", p.CategoryGetHandler)
-	router.POST("/categories", p.CategoryPostHandler)
-	router.PATCH("/categories/:category", p.CategoryPatchHandler)
-	router.DELETE("/categories/:category", p.CategoryDeleteHandler)
+	router.GET("/categories", p.categoryListHandler)
+	router.GET("/categories/:category", p.categoryGetHandler)
+	router.POST("/categories", p.categoryPostHandler)
+	router.PATCH("/categories/:category", p.categoryPatchHandler)
+	router.DELETE("/categories/:category", p.categoryDeleteHandler)
 
-	router.GET("/categories/:category/questions", p.QuestionListHandler)
-	router.GET("/categories/:category/questions/:question", p.QuestionGetHandler)
-	router.POST("/categories/:category/questions", p.QuestionPostHandler)
-	router.PATCH("/categories/:category/questions/:question", p.QuestionPatchHandler)
-	router.DELETE("/categories/:category/questions/:question", p.QuestionDeleteHandler)
+	router.GET("/categories/:category/questions", p.questionListHandler)
+	router.GET("/categories/:category/questions/:question", p.questionGetHandler)
+	router.POST("/categories/:category/questions", p.questionPostHandler)
+	router.PATCH("/categories/:category/questions/:question", p.questionPatchHandler)
+	router.DELETE("/categories/:category/questions/:question", p.questionDeleteHandler)
 
 	router.NotFound = http.HandlerFunc(func(res http.ResponseWriter, _ *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
@@ -52,7 +52,7 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 		res.WriteHeader(http.StatusMethodNotAllowed)
 	})
 
-	p.Handler = &Middleware{router}
+	p.Handler = &middleware{router}
 
 	return p
 }
