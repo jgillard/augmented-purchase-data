@@ -47,7 +47,7 @@ type CategoryPostRequest struct {
 
 const categoryNameRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
 
-func (c *server) categoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *Server) categoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	categoryList := c.categoryStore.listCategories()
 
 	payload := marshallResponse(categoryList)
@@ -55,7 +55,7 @@ func (c *server) categoryListHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *server) categoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) categoryGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	category := c.categoryStore.getCategory(categoryID)
@@ -71,7 +71,7 @@ func (c *server) categoryGetHandler(res http.ResponseWriter, req *http.Request, 
 	res.Write(payload)
 }
 
-func (c *server) categoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -137,7 +137,7 @@ func (c *server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *server) categoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) categoryPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -187,7 +187,7 @@ func (c *server) categoryPatchHandler(res http.ResponseWriter, req *http.Request
 	res.Write(payload)
 }
 
-func (c *server) categoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) categoryDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	if !c.categoryStore.categoryIDExists(categoryID) {

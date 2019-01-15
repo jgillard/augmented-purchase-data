@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type server struct {
+type Server struct {
 	categoryStore CategoryStore
 	questionStore QuestionStore
 	http.Handler
@@ -23,8 +23,8 @@ func (m *middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	m.handler.ServeHTTP(res, req)
 }
 
-func NewServer(cats CategoryStore, questions QuestionStore) *server {
-	p := new(server)
+func NewServer(cats CategoryStore, questions QuestionStore) *Server {
+	p := new(Server)
 
 	p.categoryStore = cats
 	p.questionStore = questions

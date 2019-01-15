@@ -53,7 +53,7 @@ const questionTitleRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
 
 var possibleOptionTypes = []string{"string", "number"}
 
-func (c *server) questionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) questionListHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	questionList := c.questionStore.listQuestionsForCategory(categoryID)
@@ -63,7 +63,7 @@ func (c *server) questionListHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *server) questionGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) questionGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	questionID := ps.ByName("question")
 
 	question := c.questionStore.getQuestion(questionID)
@@ -80,7 +80,7 @@ func (c *server) questionGetHandler(res http.ResponseWriter, req *http.Request, 
 	res.Write(payload)
 }
 
-func (c *server) questionPostHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 
 	requestBody, err := ioutil.ReadAll(req.Body)
@@ -169,7 +169,7 @@ func (c *server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 	res.Write(payload)
 }
 
-func (c *server) questionPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) questionPatchHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 	questionID := ps.ByName("question")
 
@@ -236,7 +236,7 @@ func (c *server) questionPatchHandler(res http.ResponseWriter, req *http.Request
 	res.Write(payload)
 }
 
-func (c *server) questionDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func (c *Server) questionDeleteHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	categoryID := ps.ByName("category")
 	questionID := ps.ByName("question")
 
