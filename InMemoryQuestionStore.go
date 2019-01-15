@@ -4,10 +4,13 @@ import (
 	"github.com/rs/xid"
 )
 
+// InMemoryQuestionStore is a list of questions
+// with methods for querying and manipluating those questions
 type InMemoryQuestionStore struct {
 	questionList QuestionList
 }
 
+// NewInMemoryQuestionStore returns an initialised InMemoryQuestionStore pointer
 func NewInMemoryQuestionStore(q QuestionList) *InMemoryQuestionStore {
 	return &InMemoryQuestionStore{q}
 }

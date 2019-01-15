@@ -6,6 +6,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Server matches the interface of http.Handler
+// and adds a question and category store
 type Server struct {
 	categoryStore CategoryStore
 	questionStore QuestionStore
@@ -23,6 +25,8 @@ func (m *middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	m.handler.ServeHTTP(res, req)
 }
 
+// NewServer returns a category & question server,
+// with a router & middleware
 func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 	p := new(Server)
 

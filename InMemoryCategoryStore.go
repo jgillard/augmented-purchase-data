@@ -2,10 +2,13 @@ package transactioncategories
 
 import "github.com/rs/xid"
 
+// InMemoryCategoryStore is a list of categories
+// with methods for querying and manipluating those categories
 type InMemoryCategoryStore struct {
 	categories CategoryList
 }
 
+// NewInMemoryCategoryStore returns an initialised InMemoryCategoryStore pointer
 func NewInMemoryCategoryStore(c CategoryList) *InMemoryCategoryStore {
 	return &InMemoryCategoryStore{c}
 }

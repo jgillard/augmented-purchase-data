@@ -12,6 +12,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// QuestionStore is an interface that when implemented,
+// provides methods for manipulating a store of questions,
+// including some helper functions for querying the store
 type QuestionStore interface {
 	listQuestionsForCategory(categoryID string) QuestionList
 	getQuestion(questionID string) Question
@@ -23,10 +26,15 @@ type QuestionStore interface {
 	questionBelongsToCategory(questionID, categoryID string) bool
 }
 
+// QuestionList stores multiple Categorys
 type QuestionList struct {
 	Questions []Question `json:"questions"`
 }
 
+// Question stores all possible question attributes
+// The structure implements the adjacency list pattern
+// and also has a Type field (currently only "number" or "string"),
+// and Options for string Questions
 type Question struct {
 	ID         string     `json:"id"`
 	Title      string     `json:"title"`
@@ -35,15 +43,20 @@ type Question struct {
 	Options    OptionList `json:"options"`
 }
 
-// is this a very odd thing to do?
+// QuestionPostRequest is a Question with no ID or CategoryID,
+// as CategoryID is obtained from the reqwuest path
+// Used for sending new Questions to the server
+// Options is a string to allow an empty list to be sent
 type QuestionPostRequest struct {
 	Title   string    `json:"title"`
 	Type    string    `json:"type"`
 	Options *[]string `json:"options"`
 }
 
+// OptionList stores multiple Options
 type OptionList []Option
 
+// Option stores all expected option attributes
 type Option struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
