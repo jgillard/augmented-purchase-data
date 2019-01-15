@@ -21,6 +21,19 @@ func TestInMemoryQuestionStore_ListQuestionsForCategory(t *testing.T) {
 	assertDeepEqual(t, got, want)
 }
 
+func TestInMemoryQuestionStore_GetQuestion(t *testing.T) {
+	questionList := QuestionList{
+		Questions: []Question{
+			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+		},
+	}
+	store := NewInMemoryQuestionStore(questionList)
+
+	got := store.GetQuestion("1")
+	want := questionList.Questions[0]
+	assertDeepEqual(t, got, want)
+}
+
 func TestInMemoryQuestionStore_AddQuestion(t *testing.T) {
 	questionList := QuestionList{}
 	store := NewInMemoryQuestionStore(questionList)

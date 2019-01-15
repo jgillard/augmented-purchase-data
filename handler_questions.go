@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"regexp"
 
 	"github.com/julienschmidt/httprouter"
@@ -13,6 +14,7 @@ import (
 
 type QuestionStore interface {
 	ListQuestionsForCategory(categoryID string) QuestionList
+	GetQuestion(questionID string) Question
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
 	RenameQuestion(questionID, questionTitle string) Question
 	DeleteQuestion(questionID string)
@@ -58,6 +60,23 @@ func (c *Server) QuestionListHandler(res http.ResponseWriter, req *http.Request,
 
 	payload := marshallResponse(questionList)
 
+	res.Write(payload)
+}
+
+func (c *Server) QuestionGetHandler(res http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	questionID := ps.ByName("question")
+
+	question := c.questionStore.GetQuestion(questionID)
+
+	if reflect.DeepEqual(question, Question{}) {
+		res.WriteHeader(http.StatusNotFound)
+		res.Write(craftErrorPayload(ErrorQuestionNotFound))
+		return
+	}
+
+	payload := marshallResponse(question)
+
+	res.WriteHeader(http.StatusOK)
 	res.Write(payload)
 }
 

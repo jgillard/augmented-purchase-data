@@ -39,6 +39,7 @@ func NewServer(cats CategoryStore, questions QuestionStore) *Server {
 	router.DELETE("/categories/:category", p.CategoryDeleteHandler)
 
 	router.GET("/categories/:category/questions", p.QuestionListHandler)
+	router.GET("/categories/:category/questions/:question", p.QuestionGetHandler)
 	router.POST("/categories/:category/questions", p.QuestionPostHandler)
 	router.PATCH("/categories/:category/questions/:question", p.QuestionPatchHandler)
 	router.DELETE("/categories/:category/questions/:question", p.QuestionDeleteHandler)

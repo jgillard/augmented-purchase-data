@@ -1,6 +1,8 @@
 package transactioncategories
 
-import "github.com/rs/xid"
+import (
+	"github.com/rs/xid"
+)
 
 type InMemoryQuestionStore struct {
 	questionList QuestionList
@@ -18,6 +20,18 @@ func (s *InMemoryQuestionStore) ListQuestionsForCategory(categoryID string) Ques
 		}
 	}
 	return questionList
+}
+
+func (s *InMemoryQuestionStore) GetQuestion(questionID string) Question {
+	var question = Question{}
+
+	for _, q := range s.questionList.Questions {
+		if q.ID == questionID {
+			question = q
+		}
+	}
+
+	return question
 }
 
 func (s *InMemoryQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
