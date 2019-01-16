@@ -1,9 +1,14 @@
 package api
 
-import context "context"
+import (
+	"context"
+
+	"github.com/jgillard/practising-go-tdd/internal"
+)
 
 type Server struct{}
 
 func (s *Server) GetStatus(context.Context, *StatusRequest) (*StatusReply, error) {
-	return &StatusReply{Status: "ok"}, nil
+	status := internal.GetStatus()
+	return &StatusReply{Status: status}, nil
 }
