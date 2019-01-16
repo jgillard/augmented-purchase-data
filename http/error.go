@@ -1,4 +1,4 @@
-package transactioncategories
+package httptransport
 
 const (
 	// Generic

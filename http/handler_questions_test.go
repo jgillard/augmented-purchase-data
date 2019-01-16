@@ -1,4 +1,4 @@
-package transactioncategories
+package httptransport
 
 import (
 	"bytes"
@@ -8,19 +8,21 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	internal "github.com/jgillard/practising-go-tdd/internal"
 )
 
 func TestListQuestionsForCategory(t *testing.T) {
 
-	questionList := QuestionList{
-		Questions: []Question{
-			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
-			Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+	questionList := internal.QuestionList{
+		Questions: []internal.Question{
+			internal.Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+			internal.Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: internal.OptionList{
 				{ID: "1", Title: "brekkie"},
 			}},
 		},
 	}
-	questionStore := NewInMemoryQuestionStore(questionList)
+	questionStore := internal.NewInMemoryQuestionStore(questionList)
 	server := NewServer(nil, questionStore)
 
 	t.Run("it returns a json question list for a category", func(t *testing.T) {
@@ -34,7 +36,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got QuestionList
+		var got internal.QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
 		want := questionList.Questions[0]
 		assertDeepEqual(t, got.Questions[0], want)
@@ -51,7 +53,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got QuestionList
+		var got internal.QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
 		want := questionList.Questions[1]
 		assertDeepEqual(t, got.Questions[0], want)
@@ -68,7 +70,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got QuestionList
+		var got internal.QuestionList
 		unmarshallInterfaceFromBody(t, body, &got)
 		want := len(got.Questions)
 		assertNumbersEqual(t, want, 0)
@@ -77,14 +79,14 @@ func TestListQuestionsForCategory(t *testing.T) {
 
 func TestGetQuestion(t *testing.T) {
 
-	questionList := QuestionList{
-		Questions: []Question{
-			Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+	questionList := internal.QuestionList{
+		Questions: []internal.Question{
+			internal.Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: internal.OptionList{
 				{ID: "1", Title: "brekkie"},
 			}},
 		},
 	}
-	questionStore := NewInMemoryQuestionStore(questionList)
+	questionStore := internal.NewInMemoryQuestionStore(questionList)
 	server := NewServer(nil, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -128,7 +130,7 @@ func TestGetQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Question
+		var got internal.Question
 		unmarshallInterfaceFromBody(t, body, &got)
 		assertStringsEqual(t, got.ID, questionList.Questions[0].ID)
 		assertStringsEqual(t, got.Title, questionList.Questions[0].Title)
@@ -141,21 +143,21 @@ func TestGetQuestion(t *testing.T) {
 func TestAddQuestion(t *testing.T) {
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
-		categoryList := CategoryList{
-			Categories: []Category{
-				Category{ID: "1234", Name: "foo", ParentID: ""},
+		categoryList := internal.CategoryList{
+			Categories: []internal.Category{
+				internal.Category{ID: "1234", Name: "foo", ParentID: ""},
 			},
 		}
-		questionList := QuestionList{
-			Questions: []Question{
-				Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
-				Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: OptionList{
+		questionList := internal.QuestionList{
+			Questions: []internal.Question{
+				internal.Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+				internal.Question{ID: "2", Title: "which meal?", CategoryID: "5678", Type: "string", Options: internal.OptionList{
 					{ID: "1", Title: "brekkie"},
 				}},
 			},
 		}
-		categoryStore := NewInMemoryCategoryStore(categoryList)
-		questionStore := NewInMemoryQuestionStore(questionList)
+		categoryStore := internal.NewInMemoryCategoryStore(categoryList)
+		questionStore := internal.NewInMemoryQuestionStore(questionList)
 		server := NewServer(categoryStore, questionStore)
 
 		cases := map[string]struct {
@@ -237,7 +239,7 @@ func TestAddQuestion(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := questionStore.questionList
+				got := questionStore.ListQuestions()
 				want := questionList
 				assertDeepEqual(t, got, want)
 			})
@@ -245,17 +247,17 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:number question", func(t *testing.T) {
-		questionList := QuestionList{
-			Questions: []Question{},
+		questionList := internal.QuestionList{
+			Questions: []internal.Question{},
 		}
-		questionStore := NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
 		title := "how many nights?"
 		optionType := "number"
 
-		qpr := QuestionPostRequest{
+		qpr := internal.QuestionPostRequest{
 			Title:   title,
 			Type:    optionType,
 			Options: nil,
@@ -272,7 +274,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Question
+		var got internal.Question
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -284,7 +286,7 @@ func TestAddQuestion(t *testing.T) {
 		assertOptionsNil(t, got.Options)
 
 		// check the store has been modified
-		got = questionStore.questionList.Questions[0]
+		got = questionStore.ListQuestions().Questions[0]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
@@ -295,17 +297,17 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:string question without options", func(t *testing.T) {
-		questionList := QuestionList{
-			Questions: []Question{},
+		questionList := internal.QuestionList{
+			Questions: []internal.Question{},
 		}
-		questionStore := NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
 		title := "what number?"
 		optionType := "number"
 
-		qpr := QuestionPostRequest{
+		qpr := internal.QuestionPostRequest{
 			Title:   title,
 			Type:    optionType,
 			Options: nil,
@@ -322,7 +324,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Question
+		var got internal.Question
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -333,7 +335,7 @@ func TestAddQuestion(t *testing.T) {
 		assertOptionsNil(t, got.Options)
 
 		// check the store has been modified
-		got = questionStore.questionList.Questions[0]
+		got = questionStore.ListQuestions().Questions[0]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
@@ -345,10 +347,10 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:string question with empty options", func(t *testing.T) {
-		questionList := QuestionList{
-			Questions: []Question{},
+		questionList := internal.QuestionList{
+			Questions: []internal.Question{},
 		}
-		questionStore := NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -356,7 +358,7 @@ func TestAddQuestion(t *testing.T) {
 		optionType := "string"
 		options := []string{}
 
-		qpr := QuestionPostRequest{
+		qpr := internal.QuestionPostRequest{
 			Title:   title,
 			Type:    optionType,
 			Options: &options,
@@ -373,7 +375,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Question
+		var got internal.Question
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -382,25 +384,25 @@ func TestAddQuestion(t *testing.T) {
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
 		// options should be an empty list
-		assertDeepEqual(t, got.Options, OptionList{})
+		assertDeepEqual(t, got.Options, internal.OptionList{})
 
 		// check the store has been modified
-		got = questionStore.questionList.Questions[0]
+		got = questionStore.ListQuestions().Questions[0]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
 		assertStringsEqual(t, got.Type, optionType)
-		assertDeepEqual(t, got.Options, OptionList{})
+		assertDeepEqual(t, got.Options, internal.OptionList{})
 
 		// get ID from store and check that's in returned Location header
 		assertStringsEqual(t, result.Header.Get("Location"), fmt.Sprintf("/categories/%s/questions/%s", categoryID, got.ID))
 	})
 
 	t.Run("add type:string question with options", func(t *testing.T) {
-		questionList := QuestionList{
-			Questions: []Question{},
+		questionList := internal.QuestionList{
+			Questions: []internal.Question{},
 		}
-		questionStore := NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(questionList)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -408,7 +410,7 @@ func TestAddQuestion(t *testing.T) {
 		optionType := "string"
 		options := []string{"brekkie", "lunch"}
 
-		qpr := QuestionPostRequest{
+		qpr := internal.QuestionPostRequest{
 			Title:   title,
 			Type:    optionType,
 			Options: &options,
@@ -425,7 +427,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Question
+		var got internal.Question
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -440,7 +442,7 @@ func TestAddQuestion(t *testing.T) {
 		assertStringsEqual(t, got.Options[1].Title, options[1])
 
 		// check the store has been modified
-		got = questionStore.questionList.Questions[0]
+		got = questionStore.ListQuestions().Questions[0]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Title, title)
 		assertStringsEqual(t, got.CategoryID, categoryID)
@@ -458,21 +460,21 @@ func TestAddQuestion(t *testing.T) {
 
 func TestRenameQuestion(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "foo", ParentID: ""},
-			Category{ID: "2345", Name: "bar", ParentID: ""},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "1234", Name: "foo", ParentID: ""},
+			internal.Category{ID: "2345", Name: "bar", ParentID: ""},
 		},
 	}
-	questionList := QuestionList{
-		Questions: []Question{
-			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
-			Question{ID: "2", Title: "how much nougat?", CategoryID: "1234", Type: "number"},
-			Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
+	questionList := internal.QuestionList{
+		Questions: []internal.Question{
+			internal.Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
+			internal.Question{ID: "2", Title: "how much nougat?", CategoryID: "1234", Type: "number"},
+			internal.Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
-	categoryStore := NewInMemoryCategoryStore(categoryList)
-	questionStore := NewInMemoryQuestionStore(questionList)
+	categoryStore := internal.NewInMemoryCategoryStore(categoryList)
+	questionStore := internal.NewInMemoryQuestionStore(questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -542,7 +544,7 @@ func TestRenameQuestion(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := questionStore.questionList
+				got := questionStore.ListQuestions()
 				want := questionList
 				assertDeepEqual(t, got, want)
 			})
@@ -566,17 +568,17 @@ func TestRenameQuestion(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var responseBody Question
+		var responseBody internal.Question
 		unmarshallInterfaceFromBody(t, body, &responseBody)
 
-		renamedQuestion := Question{ID: "1", Title: newQuestionTitle, CategoryID: "1234", Type: "number"}
+		renamedQuestion := internal.Question{ID: "1", Title: newQuestionTitle, CategoryID: "1234", Type: "number"}
 		assertStringsEqual(t, responseBody.ID, renamedQuestion.ID)
 		assertStringsEqual(t, responseBody.Title, renamedQuestion.Title)
 		assertStringsEqual(t, responseBody.CategoryID, renamedQuestion.CategoryID)
 		assertStringsEqual(t, responseBody.Type, renamedQuestion.Type)
 
 		// check the store is updated
-		got := questionStore.questionList.Questions[0].Title
+		got := questionStore.ListQuestions().Questions[0].Title
 		want := renamedQuestion.Title
 		assertStringsEqual(t, got, want)
 	})
@@ -584,19 +586,19 @@ func TestRenameQuestion(t *testing.T) {
 
 func TestRemoveQuestion(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "foo", ParentID: ""},
-			Category{ID: "2345", Name: "bar", ParentID: ""},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "1234", Name: "foo", ParentID: ""},
+			internal.Category{ID: "2345", Name: "bar", ParentID: ""},
 		},
 	}
-	questionList := QuestionList{
-		Questions: []Question{
-			Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
+	questionList := internal.QuestionList{
+		Questions: []internal.Question{
+			internal.Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	categoryStore := NewInMemoryCategoryStore(categoryList)
-	questionStore := NewInMemoryQuestionStore(questionList)
+	categoryStore := internal.NewInMemoryCategoryStore(categoryList)
+	questionStore := internal.NewInMemoryQuestionStore(questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -638,7 +640,7 @@ func TestRemoveQuestion(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := questionStore.questionList
+				got := questionStore.ListQuestions()
 				want := questionList
 				assertDeepEqual(t, got, want)
 			})
@@ -659,7 +661,7 @@ func TestRemoveQuestion(t *testing.T) {
 		assertBodyJSONIsStatus(t, body, statusDeleted)
 
 		// check store is updated
-		got := len(questionStore.questionList.Questions)
+		got := len(questionStore.ListQuestions().Questions)
 		want := 0
 		assertNumbersEqual(t, got, want)
 	})

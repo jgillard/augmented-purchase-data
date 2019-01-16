@@ -1,4 +1,4 @@
-package transactioncategories
+package httptransport
 
 import (
 	"bytes"
@@ -8,17 +8,19 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	internal "github.com/jgillard/practising-go-tdd/internal"
 )
 
 func TestListCategories(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
-			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
+			internal.Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
@@ -32,7 +34,7 @@ func TestListCategories(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got CategoryList
+		var got internal.CategoryList
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		want := categoryList
@@ -48,15 +50,15 @@ func TestListCategories(t *testing.T) {
 
 func TestGetCategory(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "accommodation", ParentID: ""},
-			Category{ID: "2345", Name: "food and drink", ParentID: ""},
-			Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
-			Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "1234", Name: "accommodation", ParentID: ""},
+			internal.Category{ID: "2345", Name: "food and drink", ParentID: ""},
+			internal.Category{ID: "abcdef", Name: "hostel", ParentID: "1234"},
+			internal.Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
@@ -91,7 +93,7 @@ func TestGetCategory(t *testing.T) {
 		assertStringsEqual(t, got.Name, categoryList.Categories[0].Name)
 		assertStringsEqual(t, got.ParentID, categoryList.Categories[0].ParentID)
 
-		accomodationChildren := []Category{
+		accomodationChildren := []internal.Category{
 			categoryList.Categories[2],
 			categoryList.Categories[3],
 		}
@@ -121,13 +123,13 @@ func TestGetCategory(t *testing.T) {
 
 func TestAddCategory(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "existing category name", ParentID: ""},
-			Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "1234", Name: "existing category name", ParentID: ""},
+			internal.Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -190,7 +192,7 @@ func TestAddCategory(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := store.categories
+				got := store.ListCategories()
 				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
@@ -216,7 +218,7 @@ func TestAddCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Category
+		var got internal.Category
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -225,7 +227,7 @@ func TestAddCategory(t *testing.T) {
 		assertStringsEqual(t, got.ParentID, parentID)
 
 		// check the store has been modified
-		got = store.categories.Categories[2]
+		got = store.ListCategories().Categories[2]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
 		assertStringsEqual(t, got.ParentID, parentID)
@@ -253,7 +255,7 @@ func TestAddCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusCreated)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got Category
+		var got internal.Category
 		unmarshallInterfaceFromBody(t, body, &got)
 
 		// check the response
@@ -262,7 +264,7 @@ func TestAddCategory(t *testing.T) {
 		assertStringsEqual(t, got.ParentID, parentID)
 
 		// check the store has been modified
-		got = store.categories.Categories[3]
+		got = store.ListCategories().Categories[3]
 		assertIsXid(t, got.ID)
 		assertStringsEqual(t, got.Name, categoryName)
 		assertStringsEqual(t, got.ParentID, parentID)
@@ -274,12 +276,12 @@ func TestAddCategory(t *testing.T) {
 
 func TestRenameCategory(t *testing.T) {
 
-	categoryList := CategoryList{
-		Categories: []Category{
-			Category{ID: "1234", Name: "accommodation", ParentID: ""},
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
+			internal.Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -338,7 +340,7 @@ func TestRenameCategory(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := store.categories
+				got := store.ListCategories()
 				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
@@ -359,16 +361,16 @@ func TestRenameCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var responseBody Category
+		var responseBody internal.Category
 		unmarshallInterfaceFromBody(t, body, &responseBody)
 
-		renamedCategory := Category{ID: "1234", Name: newCatName, ParentID: ""}
+		renamedCategory := internal.Category{ID: "1234", Name: newCatName, ParentID: ""}
 		assertStringsEqual(t, responseBody.ID, renamedCategory.ID)
 		assertStringsEqual(t, responseBody.Name, renamedCategory.Name)
 		assertStringsEqual(t, responseBody.ParentID, renamedCategory.ParentID)
 
 		// check the store is updated
-		got := store.categories.Categories[0].Name
+		got := store.ListCategories().Categories[0].Name
 		want := renamedCategory.Name
 		assertStringsEqual(t, got, want)
 	})
@@ -376,13 +378,13 @@ func TestRenameCategory(t *testing.T) {
 
 func TestRemoveCategory(t *testing.T) {
 
-	existingCategory := Category{ID: "1234", Name: "accommodation"}
-	categoryList := CategoryList{
-		Categories: []Category{
+	existingCategory := internal.Category{ID: "1234", Name: "accommodation"}
+	categoryList := internal.CategoryList{
+		Categories: []internal.Category{
 			existingCategory,
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -414,7 +416,7 @@ func TestRemoveCategory(t *testing.T) {
 				assertBodyErrorTitle(t, body, c.errorTitle)
 
 				// check the store is unmodified
-				got := store.categories
+				got := store.ListCategories()
 				want := categoryList
 				assertDeepEqual(t, got, want)
 			})
@@ -435,31 +437,8 @@ func TestRemoveCategory(t *testing.T) {
 		assertBodyJSONIsStatus(t, body, statusDeleted)
 
 		// check store is updated
-		got := len(store.categories.Categories)
+		got := len(store.ListCategories().Categories)
 		want := 0
 		assertNumbersEqual(t, got, want)
 	})
-}
-
-func testisValidCategoryName(t *testing.T) {
-	cases := map[string]string{
-		"empty string":         "",
-		"only whitespace":      "     ",
-		"leading whitespace":   " foobar",
-		"trailing whitespace":  "foobar ",
-		"string over 32 chars": "abcdefhijklmnopqrstuvwxyzabcdefgh",
-		"numeric":              "123",
-		"punctuation chars":    "!@$",
-	}
-
-	for name, value := range cases {
-		t.Run(fmt.Sprintf("name must not be %s", name), func(t *testing.T) {
-			got := isValidCategoryName(value)
-			want := false
-
-			if got != want {
-				t.Errorf("'%s' should be treated as an invalid category name", value)
-			}
-		})
-	}
 }

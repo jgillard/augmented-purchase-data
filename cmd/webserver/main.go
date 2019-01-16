@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	transactioncategories "github.com/jgillard/practising-go-tdd"
+	httptransport "github.com/jgillard/practising-go-tdd/http"
+	internal "github.com/jgillard/practising-go-tdd/internal"
 )
 
 func main() {
@@ -16,10 +17,10 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	categoryStore := transactioncategories.NewInMemoryCategoryStore(transactioncategories.CategoryList{})
-	questionStore := transactioncategories.NewInMemoryQuestionStore(transactioncategories.QuestionList{})
+	categoryStore := internal.NewInMemoryCategoryStore(internal.CategoryList{})
+	questionStore := internal.NewInMemoryQuestionStore(internal.QuestionList{})
 
-	server := transactioncategories.NewServer(categoryStore, questionStore)
+	server := httptransport.NewServer(categoryStore, questionStore)
 
 	if err := http.ListenAndServe(":"+port, server); err != nil {
 		log.Fatalf("could not listen on port %s %v", port, err)

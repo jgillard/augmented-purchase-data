@@ -1,4 +1,4 @@
-package transactioncategories
+package internal
 
 import "testing"
 
@@ -8,7 +8,7 @@ func TestInMemoryQuestionStore(t *testing.T) {
 	assertDeepEqual(t, got, want)
 }
 
-func TestInMemoryQuestionStore_listQuestionsForCategory(t *testing.T) {
+func TestInMemoryQuestionStore_ListQuestions(t *testing.T) {
 	questionList := QuestionList{
 		Questions: []Question{
 			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
@@ -16,12 +16,24 @@ func TestInMemoryQuestionStore_listQuestionsForCategory(t *testing.T) {
 	}
 	store := NewInMemoryQuestionStore(questionList)
 
-	got := store.listQuestionsForCategory("1234")
+	got := store.ListQuestions()
+	want := questionList
+	assertDeepEqual(t, got, want)
+}
+func TestInMemoryQuestionStore_ListQuestionsForCategory(t *testing.T) {
+	questionList := QuestionList{
+		Questions: []Question{
+			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
+		},
+	}
+	store := NewInMemoryQuestionStore(questionList)
+
+	got := store.ListQuestionsForCategory("1234")
 	want := questionList
 	assertDeepEqual(t, got, want)
 }
 
-func TestInMemoryQuestionStore_getQuestion(t *testing.T) {
+func TestInMemoryQuestionStore_GetQuestion(t *testing.T) {
 	questionList := QuestionList{
 		Questions: []Question{
 			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
@@ -29,12 +41,12 @@ func TestInMemoryQuestionStore_getQuestion(t *testing.T) {
 	}
 	store := NewInMemoryQuestionStore(questionList)
 
-	got := store.getQuestion("1")
+	got := store.GetQuestion("1")
 	want := questionList.Questions[0]
 	assertDeepEqual(t, got, want)
 }
 
-func TestInMemoryQuestionStore_addQuestion(t *testing.T) {
+func TestInMemoryQuestionStore_AddQuestion(t *testing.T) {
 	questionList := QuestionList{}
 	store := NewInMemoryQuestionStore(questionList)
 
@@ -47,7 +59,7 @@ func TestInMemoryQuestionStore_addQuestion(t *testing.T) {
 			Options: &[]string{"bar"},
 		}
 
-		got := store.addQuestion(categoryID, question)
+		got := store.AddQuestion(categoryID, question)
 
 		// assert response
 		assertIsXid(t, got.ID)
@@ -74,7 +86,7 @@ func TestInMemoryQuestionStore_addQuestion(t *testing.T) {
 			Options: nil,
 		}
 
-		got := store.addQuestion(categoryID, question)
+		got := store.AddQuestion(categoryID, question)
 
 		// assert response
 		assertIsXid(t, got.ID)
@@ -97,7 +109,7 @@ func TestInMemoryQuestionStore_addQuestion(t *testing.T) {
 	})
 }
 
-func TestInMemoryQuestionStore_renameQuestion(t *testing.T) {
+func TestInMemoryQuestionStore_RenameQuestion(t *testing.T) {
 	question := Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"}
 	questionList := QuestionList{
 		Questions: []Question{
@@ -108,7 +120,7 @@ func TestInMemoryQuestionStore_renameQuestion(t *testing.T) {
 
 	newTitle := "foobar"
 
-	got := store.renameQuestion(question.ID, newTitle)
+	got := store.RenameQuestion(question.ID, newTitle)
 
 	// assert response
 	assertStringsEqual(t, got.ID, question.ID)
@@ -120,7 +132,7 @@ func TestInMemoryQuestionStore_renameQuestion(t *testing.T) {
 	assertStringsEqual(t, got.Title, newTitle)
 }
 
-func TestInMemoryQuestionStore_deleteQuestion(t *testing.T) {
+func TestInMemoryQuestionStore_DeleteQuestion(t *testing.T) {
 	question := Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"}
 	questionList := QuestionList{
 		Questions: []Question{
@@ -129,7 +141,7 @@ func TestInMemoryQuestionStore_deleteQuestion(t *testing.T) {
 	}
 	store := NewInMemoryQuestionStore(questionList)
 
-	store.deleteQuestion("1")
+	store.DeleteQuestion("1")
 
 	got := len(store.questionList.Questions)
 	want := 0

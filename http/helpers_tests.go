@@ -1,4 +1,4 @@
-package transactioncategories
+package httptransport
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+
+	internal "github.com/jgillard/practising-go-tdd/internal"
 
 	"github.com/rs/xid"
 )
@@ -132,7 +134,7 @@ func assertBodyErrorTitle(t *testing.T, bodyBytes []byte, title string) {
 
 }
 
-func assertOptionsNil(t *testing.T, got OptionList) {
+func assertOptionsNil(t *testing.T, got internal.OptionList) {
 	t.Helper()
 	if got != nil {
 		t.Fatalf("Options should not have been set, got %v", got)
