@@ -6,9 +6,9 @@
 
 ## Testing
 
-`docker run -v ~/go/src/github.com/jgillard/practising-go-tdd/rpc:/rpc lequoctuan/grpcc --insecure --proto /rpc/status.proto --address host.docker.internal:7777 --eval 'client.getStatus({},printReply)'`
+`docker run -v ~/go/src/github.com/jgillard/practising-go-tdd/rpc:/rpc lequoctuan/grpcc --insecure --proto /rpc/service.proto --address host.docker.internal:7777 --exec /rpc/grpcc_tests.js`
 
-returns 
+prints for the first call
 
 ```
 {

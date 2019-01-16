@@ -11,10 +11,9 @@ import (
 
 func main() {
 
-	port := os.Getenv("PORT")
-
+	port := os.Getenv("HTTP_PORT")
 	if port == "" {
-		log.Fatal("$PORT must be set")
+		log.Fatal("$HTTP_PORT must be set")
 	}
 
 	categoryStore := internal.NewInMemoryCategoryStore(nil)

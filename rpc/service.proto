@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package api;
+
+message EmptyRequest {}
+
+message StatusReply {
+  string status = 1;
+}
+
+message GetCategoryRequest {
+  string categoryID = 1;
+}
+
+message GetCategoryReply {
+  string ID = 1;
+  string name = 2;
+  string parentID = 3;
+}
+
+service PracticingGoTdd {
+  rpc GetStatus(EmptyRequest) returns (StatusReply) {}
+  rpc GetCategory(GetCategoryRequest) returns (GetCategoryReply) {}
+}
