@@ -1,4 +1,4 @@
-package api
+package rpctransport
 
 import (
 	"context"
@@ -35,5 +35,3 @@ func (s *Server) GetCategory(ctx context.Context, req *GetCategoryRequest) (*Get
 	}
 	return reply, nil
 }
-
-// implement an test.go file to run as exec from docker run

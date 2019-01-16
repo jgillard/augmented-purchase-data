@@ -24,6 +24,10 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = [
+    "github.com/golang/protobuf/protoc-gen-go",
+]
+
 [metadata.heroku]
   root-package = "github.com/jgillard/practising-go-tdd"
   go-version = "go1.11"
