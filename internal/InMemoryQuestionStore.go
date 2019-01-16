@@ -1,4 +1,4 @@
-package transactioncategories
+package internal
 
 import (
 	"github.com/rs/xid"
@@ -15,7 +15,11 @@ func NewInMemoryQuestionStore(q QuestionList) *InMemoryQuestionStore {
 	return &InMemoryQuestionStore{q}
 }
 
-func (s *InMemoryQuestionStore) listQuestionsForCategory(categoryID string) QuestionList {
+func (s *InMemoryQuestionStore) ListQuestions() QuestionList {
+	return s.questionList
+}
+
+func (s *InMemoryQuestionStore) ListQuestionsForCategory(categoryID string) QuestionList {
 	var questionList QuestionList
 	for _, q := range s.questionList.Questions {
 		if q.CategoryID == categoryID {
@@ -25,7 +29,7 @@ func (s *InMemoryQuestionStore) listQuestionsForCategory(categoryID string) Ques
 	return questionList
 }
 
-func (s *InMemoryQuestionStore) getQuestion(questionID string) Question {
+func (s *InMemoryQuestionStore) GetQuestion(questionID string) Question {
 	var question = Question{}
 
 	for _, q := range s.questionList.Questions {
@@ -37,7 +41,7 @@ func (s *InMemoryQuestionStore) getQuestion(questionID string) Question {
 	return question
 }
 
-func (s *InMemoryQuestionStore) addQuestion(categoryID string, q QuestionPostRequest) Question {
+func (s *InMemoryQuestionStore) AddQuestion(categoryID string, q QuestionPostRequest) Question {
 	question := Question{
 		ID:         xid.New().String(),
 		Title:      q.Title,
@@ -61,7 +65,7 @@ func (s *InMemoryQuestionStore) addQuestion(categoryID string, q QuestionPostReq
 	return question
 }
 
-func (s *InMemoryQuestionStore) renameQuestion(questionID, questionTitle string) Question {
+func (s *InMemoryQuestionStore) RenameQuestion(questionID, questionTitle string) Question {
 	index := 0
 
 	for i, q := range s.questionList.Questions {
@@ -75,7 +79,7 @@ func (s *InMemoryQuestionStore) renameQuestion(questionID, questionTitle string)
 	return s.questionList.Questions[index]
 }
 
-func (s *InMemoryQuestionStore) deleteQuestion(questionID string) {
+func (s *InMemoryQuestionStore) DeleteQuestion(questionID string) {
 	index := 0
 	for i, q := range s.questionList.Questions {
 		if q.ID == questionID {
@@ -86,7 +90,7 @@ func (s *InMemoryQuestionStore) deleteQuestion(questionID string) {
 	s.questionList.Questions = append(s.questionList.Questions[:index], s.questionList.Questions[index+1:]...)
 }
 
-func (s *InMemoryQuestionStore) questionIDExists(questionID string) bool {
+func (s *InMemoryQuestionStore) QuestionIDExists(questionID string) bool {
 	exists := false
 	for _, q := range s.questionList.Questions {
 		if q.ID == questionID {
@@ -96,7 +100,7 @@ func (s *InMemoryQuestionStore) questionIDExists(questionID string) bool {
 	return exists
 }
 
-func (s *InMemoryQuestionStore) questionTitleExists(categoryID, questionTitle string) bool {
+func (s *InMemoryQuestionStore) QuestionTitleExists(categoryID, questionTitle string) bool {
 	alreadyExists := false
 	for _, q := range s.questionList.Questions {
 		if q.CategoryID == categoryID {
@@ -108,7 +112,7 @@ func (s *InMemoryQuestionStore) questionTitleExists(categoryID, questionTitle st
 	return alreadyExists
 }
 
-func (s *InMemoryQuestionStore) questionBelongsToCategory(questionID, categoryID string) bool {
+func (s *InMemoryQuestionStore) QuestionBelongsToCategory(questionID, categoryID string) bool {
 	belongsToCategory := true
 	for _, q := range s.questionList.Questions {
 		if q.ID == questionID {

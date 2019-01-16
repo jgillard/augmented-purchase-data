@@ -1,10 +1,6 @@
-package transactioncategories
+package httptransport
 
 import "encoding/json"
-
-type jsonID struct {
-	ID string `json:"id"`
-}
 
 type jsonName struct {
 	Name string `json:"name"`

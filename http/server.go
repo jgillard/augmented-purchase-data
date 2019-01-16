@@ -1,16 +1,18 @@
-package transactioncategories
+package httptransport
 
 import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+
+	internal "github.com/jgillard/practising-go-tdd/internal"
 )
 
 // Server matches the interface of http.Handler
 // and adds a question and category store
 type Server struct {
-	categoryStore CategoryStore
-	questionStore QuestionStore
+	categoryStore internal.CategoryStore
+	questionStore internal.QuestionStore
 	http.Handler
 }
 
@@ -27,7 +29,7 @@ func (m *middleware) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 // NewServer returns a category & question server,
 // with a router & middleware
-func NewServer(cats CategoryStore, questions QuestionStore) *Server {
+func NewServer(cats internal.CategoryStore, questions internal.QuestionStore) *Server {
 	p := new(Server)
 
 	p.categoryStore = cats
