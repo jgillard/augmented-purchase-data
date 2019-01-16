@@ -51,24 +51,6 @@ func ensureStringFieldNonEmpty(res http.ResponseWriter, key, title string) bool 
 	return true
 }
 
-func ensureStringFieldTitle(res http.ResponseWriter, key, title string, possibleOptionTypes []string) bool {
-	isValid := false
-
-	for _, possible := range possibleOptionTypes {
-		if title == possible {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
-		fmt.Printf(`"%s" must be one of %v`, key, possibleOptionTypes)
-		res.WriteHeader(http.StatusBadRequest)
-	}
-
-	return isValid
-}
-
 func ensureNoDuplicates(res http.ResponseWriter, key string, strings []string) bool {
 	noDuplicates := true
 

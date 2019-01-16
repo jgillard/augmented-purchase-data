@@ -11,6 +11,7 @@ type QuestionStore interface {
 	AddQuestion(categoryID string, question QuestionPostRequest) Question
 	RenameQuestion(questionID, questionTitle string) Question
 	DeleteQuestion(questionID string)
+
 	QuestionIDExists(questionID string) bool
 	QuestionTitleExists(categoryID, questionTitle string) bool
 	QuestionBelongsToCategory(questionID, categoryID string) bool
@@ -54,7 +55,7 @@ type Option struct {
 
 const questionTitleRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+\??$`
 
-var PossibleOptionTypes = []string{"string", "number"}
+var possibleOptionTypes = []string{"string", "number"}
 
 func IsValidQuestionTitle(title string) bool {
 	isValid := true
@@ -66,6 +67,19 @@ func IsValidQuestionTitle(title string) bool {
 	isLetterOrWhitespace := regexp.MustCompile(questionTitleRegex).MatchString
 	if !isLetterOrWhitespace(title) {
 		isValid = false
+	}
+
+	return isValid
+}
+
+func IsValidOptionType(providedType string) bool {
+	isValid := false
+
+	for _, possible := range possibleOptionTypes {
+		if providedType == possible {
+			isValid = true
+			break
+		}
 	}
 
 	return isValid

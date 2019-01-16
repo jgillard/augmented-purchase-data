@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	internal "github.com/jgillard/practising-go-tdd/internal"
+
 	"github.com/rs/xid"
 )
 

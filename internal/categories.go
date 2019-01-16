@@ -2,20 +2,19 @@ package internal
 
 import "regexp"
 
-const categoryNameRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
-
 // CategoryStore is an interface that when implemented,
 // provides methods for manipulating a store of categories,
 // including some helper functions for querying the store
 type CategoryStore interface {
 	ListCategories() CategoryList
-	GetCategory(categoryID string) CategoryGetResponse
+	GetCategory(categoryID string) Category
+	GetChildCategories(categoryID string) []Category
 	AddCategory(categoryName, parentID string) Category
 	RenameCategory(categoryID, categoryName string) Category
 	DeleteCategory(categoryID string)
+
 	CategoryIDExists(categoryID string) bool
 	CategoryNameExists(categoryName string) bool
-	CategoryParentIDExists(categoryParentID string) bool
 	GetCategoryDepth(categoryID string) int
 }
 
@@ -32,19 +31,7 @@ type Category struct {
 	ParentID string `json:"parentID"`
 }
 
-// CategoryGetResponse returns a Category in addition to its immediate child categories
-type CategoryGetResponse struct {
-	Category
-	Children []Category `json:"children"`
-}
-
-// CategoryPostRequest is a Category with no ID
-// Used for sending new Categorys to the server
-// ParentID is a string to allow "" to signify a top-level Category
-type CategoryPostRequest struct {
-	Name     string  `json:"name"`
-	ParentID *string `json:"parentID"`
-}
+const categoryNameRegex = `^[a-zA-Z]+[a-zA-Z ]+?[a-zA-Z]+$`
 
 func IsValidCategoryName(name string) bool {
 	isValid := true

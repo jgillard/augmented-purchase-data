@@ -28,9 +28,6 @@ func assertDeepEqual(t *testing.T, got, want interface{}) {
 	}
 }
 
-var assertStatusCode = assertNumbersEqual
-var assertContentType = assertStringsEqual
-
 func assertIsXid(t *testing.T, s string) {
 	t.Helper()
 	_, err := xid.FromString(s)

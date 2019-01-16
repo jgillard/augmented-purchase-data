@@ -17,30 +17,28 @@ func (s *InMemoryCategoryStore) ListCategories() CategoryList {
 	return s.categories
 }
 
-func (s *InMemoryCategoryStore) GetCategory(id string) CategoryGetResponse {
+func (s *InMemoryCategoryStore) GetCategory(id string) Category {
 	category := Category{}
+
 	for _, c := range s.categories.Categories {
 		if c.ID == id {
 			category = c
 		}
 	}
 
-	if category == (Category{}) {
-		return CategoryGetResponse{}
-	}
+	return category
+}
 
+func (s *InMemoryCategoryStore) GetChildCategories(id string) []Category {
 	children := []Category{}
+
 	for _, c := range s.categories.Categories {
-		if c.ParentID == category.ID {
+		if c.ParentID == id {
 			children = append(children, c)
 		}
 	}
 
-	response := CategoryGetResponse{
-		category,
-		children,
-	}
-	return response
+	return children
 }
 
 func (s *InMemoryCategoryStore) AddCategory(categoryName, parentID string) Category {
@@ -104,18 +102,6 @@ func (s *InMemoryCategoryStore) CategoryNameExists(categoryName string) bool {
 	}
 
 	return alreadyExists
-}
-
-func (s *InMemoryCategoryStore) CategoryParentIDExists(parentID string) bool {
-	exists := false
-
-	for _, c := range s.categories.Categories {
-		if c.ID == parentID {
-			exists = true
-		}
-	}
-
-	return exists
 }
 
 func (s *InMemoryCategoryStore) GetCategoryDepth(categoryID string) int {

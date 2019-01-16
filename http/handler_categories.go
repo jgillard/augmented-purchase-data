@@ -12,6 +12,20 @@ import (
 	internal "github.com/jgillard/practising-go-tdd/internal"
 )
 
+// CategoryGetResponse returns a Category in addition to its immediate child categories
+type CategoryGetResponse struct {
+	internal.Category
+	Children []internal.Category `json:"children"`
+}
+
+// CategoryPostRequest is a Category with no ID
+// Used for sending new Categorys to the server
+// ParentID is a string to allow "" to signify a top-level Category
+type CategoryPostRequest struct {
+	Name     string  `json:"name"`
+	ParentID *string `json:"parentID"`
+}
+
 func (c *Server) categoryListHandler(res http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	categoryList := c.categoryStore.ListCategories()
 
@@ -25,13 +39,20 @@ func (c *Server) categoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	category := c.categoryStore.GetCategory(categoryID)
 
-	if reflect.DeepEqual(category, internal.CategoryGetResponse{}) {
+	if reflect.DeepEqual(category, internal.Category{}) {
 		res.WriteHeader(http.StatusNotFound)
 		res.Write(craftErrorPayload(errorCategoryNotFound))
 		return
 	}
 
-	payload := marshallResponse(category)
+	children := c.categoryStore.GetChildCategories(categoryID)
+
+	responseStruct := CategoryGetResponse{
+		category,
+		children,
+	}
+
+	payload := marshallResponse(responseStruct)
 
 	res.Write(payload)
 }
@@ -48,12 +69,12 @@ func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	var got internal.CategoryPostRequest
+	var got CategoryPostRequest
 	unmarshallRequest(requestBody, &got)
 
 	categoryName := got.Name
 
-	if !ensureJSONFieldsPresent(res, got, internal.CategoryPostRequest{}) {
+	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
 		res.Write(craftErrorPayload(errorFieldMissing))
 		return
 	}
@@ -79,7 +100,7 @@ func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	parentID := *got.ParentID
 
-	if !c.categoryStore.CategoryParentIDExists(parentID) && parentID != "" {
+	if !c.categoryStore.CategoryIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
 		res.Write(craftErrorPayload(errorParentIDNotFound))
 		return

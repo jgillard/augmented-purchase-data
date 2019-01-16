@@ -85,7 +85,8 @@ func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 		return
 	}
 
-	if !ensureStringFieldTitle(res, "type", got.Type, internal.PossibleOptionTypes) {
+	if !internal.IsValidOptionType(got.Type) {
+		res.WriteHeader(http.StatusBadRequest)
 		res.Write(craftErrorPayload(errorInvalidType))
 		return
 	}

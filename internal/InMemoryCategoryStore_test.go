@@ -21,6 +21,31 @@ func TestInMemoryCategoryStore_ListCategories(t *testing.T) {
 	assertDeepEqual(t, got, want)
 }
 
+func TestInMemoryCategoryStore_GetChildCategories(t *testing.T) {
+	categoryList := CategoryList{
+		Categories: []Category{
+			Category{ID: "1234", Name: "accommodation", ParentID: ""},
+			Category{ID: "1235", Name: "foo", ParentID: "1234"},
+			Category{ID: "1236", Name: "bar", ParentID: "1235"},
+		},
+	}
+	store := NewInMemoryCategoryStore(categoryList)
+
+	t.Run("has children", func(t *testing.T) {
+		got := store.GetChildCategories("1234")
+		want := []Category{
+			categoryList.Categories[1],
+		}
+		assertDeepEqual(t, got, want)
+	})
+
+	t.Run("no children", func(t *testing.T) {
+		got := store.GetChildCategories("1236")
+		want := []Category{}
+		assertDeepEqual(t, got, want)
+	})
+}
+
 func TestInMemoryCategoryStore_GetCategory(t *testing.T) {
 	category := Category{ID: "1234", Name: "accommodation"}
 	categoryList := CategoryList{
@@ -32,13 +57,13 @@ func TestInMemoryCategoryStore_GetCategory(t *testing.T) {
 
 	t.Run("ID doesn't exist", func(t *testing.T) {
 		got := store.GetCategory("abcd")
-		want := CategoryGetResponse{}
+		want := Category{}
 		assertDeepEqual(t, got, want)
 	})
 
 	t.Run("ID exists", func(t *testing.T) {
 		got := store.GetCategory("1234")
-		want := CategoryGetResponse{category, []Category{}}
+		want := category
 		assertDeepEqual(t, got, want)
 	})
 }

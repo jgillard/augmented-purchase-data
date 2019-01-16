@@ -87,7 +87,7 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got internal.CategoryGetResponse
+		var got CategoryGetResponse
 		unmarshallInterfaceFromBody(t, body, &got)
 		assertStringsEqual(t, got.ID, categoryList.Categories[0].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[0].Name)
@@ -112,7 +112,7 @@ func TestGetCategory(t *testing.T) {
 		assertStatusCode(t, result.StatusCode, http.StatusOK)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
 
-		var got internal.CategoryGetResponse
+		var got CategoryGetResponse
 		unmarshallInterfaceFromBody(t, body, &got)
 		assertStringsEqual(t, got.ID, categoryList.Categories[1].ID)
 		assertStringsEqual(t, got.Name, categoryList.Categories[1].Name)
@@ -203,7 +203,7 @@ func TestAddCategory(t *testing.T) {
 		categoryName := "new category name"
 		parentID := ""
 
-		cpr := internal.CategoryPostRequest{
+		cpr := CategoryPostRequest{
 			Name:     categoryName,
 			ParentID: &parentID,
 		}
@@ -240,7 +240,7 @@ func TestAddCategory(t *testing.T) {
 		categoryName := "another new category name"
 		parentID := "1234"
 
-		cpr := internal.CategoryPostRequest{
+		cpr := CategoryPostRequest{
 			Name:     categoryName,
 			ParentID: &parentID,
 		}
