@@ -98,7 +98,7 @@ func TestGetQuestion(t *testing.T) {
 			"ID not found": {
 				path:       "/categories/5678/questions/1",
 				want:       http.StatusNotFound,
-				errorTitle: errorQuestionNotFound,
+				errorTitle: internal.ErrorQuestionNotFound,
 			},
 		}
 
@@ -176,49 +176,49 @@ func TestAddQuestion(t *testing.T) {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"", "type":"number"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorTitleEmpty,
+				errorTitle: internal.ErrorTitleEmpty,
 			},
 			"title is duplicate": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"how many nights?", "type":"number"}`,
 				want:       http.StatusConflict,
-				errorTitle: errorDuplicateTitle,
+				errorTitle: internal.ErrorDuplicateTitle,
 			},
 			"type is empty": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":""}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorTypeEmpty,
+				errorTitle: internal.ErrorTypeEmpty,
 			},
 			"type doesn't exist": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"foo"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorInvalidType,
+				errorTitle: internal.ErrorInvalidType,
 			},
 			"options is not list type": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":""}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorOptionsInvalid,
+				errorTitle: internal.ErrorOptionsInvalid,
 			},
 			"options has duplicate": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":["foo", "foo"]}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorDuplicateOption,
+				errorTitle: internal.ErrorDuplicateOption,
 			},
 			"options contains empty string": {
 				path:       "/categories/1234/questions",
 				input:      `{"title":"foo", "type":"string", "options":[""]}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorOptionEmpty,
+				errorTitle: internal.ErrorOptionEmpty,
 			},
 			"category doesn't exist": {
 				path:       "/categories/5678/questions",
 				input:      `{"title":"foo", "type":"string"}`,
 				want:       http.StatusNotFound,
-				errorTitle: errorCategoryNotFound,
+				errorTitle: internal.ErrorCategoryNotFound,
 			},
 		}
 
@@ -482,37 +482,37 @@ func TestRenameQuestion(t *testing.T) {
 				path:       "/categories/1234/questions/1",
 				input:      `{}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorFieldMissing,
+				errorTitle: internal.ErrorFieldMissing,
 			},
 			"invalid title": {
 				path:       "/categories/1234/questions/1",
 				input:      `{"title":"foo/*!bar"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: errorInvalidTitle,
+				errorTitle: internal.ErrorInvalidTitle,
 			},
 			"duplicate title": {
 				path:       "/categories/1234/questions/1",
 				input:      `{"title":"how much nougat?"}`,
 				want:       http.StatusConflict,
-				errorTitle: errorDuplicateTitle,
+				errorTitle: internal.ErrorDuplicateTitle,
 			},
 			"category doesn't exist": {
 				path:       "/categories/5678/questions/1",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: errorCategoryNotFound,
+				errorTitle: internal.ErrorCategoryNotFound,
 			},
 			"ID not found": {
 				path:       "/categories/1234/questions/4",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: errorQuestionNotFound,
+				errorTitle: internal.ErrorQuestionNotFound,
 			},
 			"question does not belong to category": {
 				path:       "/categories/1234/questions/3",
 				input:      `{"title":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: errorQuestionDoesntBelongToCategory,
+				errorTitle: internal.ErrorQuestionDoesntBelongToCategory,
 			},
 		}
 
@@ -598,17 +598,17 @@ func TestRemoveQuestion(t *testing.T) {
 			"category doesn't exist": {
 				path:       "/categories/5678/questions/2",
 				want:       http.StatusNotFound,
-				errorTitle: errorCategoryNotFound,
+				errorTitle: internal.ErrorCategoryNotFound,
 			},
 			"question doesn't exist": {
 				path:       "/categories/1234/questions/2",
 				want:       http.StatusNotFound,
-				errorTitle: errorQuestionNotFound,
+				errorTitle: internal.ErrorQuestionNotFound,
 			},
 			"question doesn't belong to category": {
 				path:       "/categories/2345/questions/1",
 				want:       http.StatusNotFound,
-				errorTitle: errorQuestionDoesntBelongToCategory,
+				errorTitle: internal.ErrorQuestionDoesntBelongToCategory,
 			},
 		}
 

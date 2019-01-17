@@ -72,7 +72,7 @@ func TestGetCategory(t *testing.T) {
 		// check the response
 		assertStatusCode(t, result.StatusCode, http.StatusNotFound)
 		assertContentType(t, result.Header.Get(contentTypeKey), jsonContentType)
-		assertBodyErrorTitle(t, body, errorCategoryNotFound)
+		assertBodyErrorTitle(t, body, internal.ErrorCategoryNotFound)
 	})
 
 	t.Run("get category with children", func(t *testing.T) {
@@ -146,32 +146,32 @@ func TestAddCategory(t *testing.T) {
 			"name missing": {
 				input:      `{}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorFieldMissing,
+				errorTitle: internal.ErrorFieldMissing,
 			},
 			"duplicate name": {
 				input:      `{"name":"existing category name"}`,
 				want:       http.StatusConflict,
-				errorTitle: errorDuplicateCategoryName,
+				errorTitle: internal.ErrorDuplicateCategoryName,
 			},
 			"invalid name": {
 				input:      `{"name":"abc123!@£"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: errorInvalidCategoryName,
+				errorTitle: internal.ErrorInvalidCategoryName,
 			},
 			"parentID missing": {
 				input:      `{"name":"valid name"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorFieldMissing,
+				errorTitle: internal.ErrorFieldMissing,
 			},
 			"parentID doesn't exist": {
 				input:      `{"name":"foo", "parentID":"5678"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: errorParentIDNotFound,
+				errorTitle: internal.ErrorParentIDNotFound,
 			},
 			"category would be >2 levels deep": {
 				input:      `{"name":"foo", "parentID":"2345"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: errorCategoryTooNested,
+				errorTitle: internal.ErrorCategoryTooNested,
 			},
 		}
 
@@ -301,25 +301,25 @@ func TestRenameCategory(t *testing.T) {
 				ID:         "1234",
 				body:       `{"foo":"bar"}`,
 				want:       http.StatusBadRequest,
-				errorTitle: errorFieldMissing,
+				errorTitle: internal.ErrorFieldMissing,
 			},
 			"invalid name": {
 				ID:         "1234",
 				body:       `{"name":"foo/*!bar"}`,
 				want:       http.StatusUnprocessableEntity,
-				errorTitle: errorInvalidCategoryName,
+				errorTitle: internal.ErrorInvalidCategoryName,
 			},
 			"duplicate name": {
 				ID:         "1234",
 				body:       `{"name":"accommodation"}`,
 				want:       http.StatusConflict,
-				errorTitle: errorDuplicateCategoryName,
+				errorTitle: internal.ErrorDuplicateCategoryName,
 			},
 			"ID not found": {
 				ID:         "5678",
 				body:       `{"name":"irrelevant"}`,
 				want:       http.StatusNotFound,
-				errorTitle: errorCategoryNotFound,
+				errorTitle: internal.ErrorCategoryNotFound,
 			},
 		}
 
@@ -396,7 +396,7 @@ func TestRemoveCategory(t *testing.T) {
 			"category not found": {
 				input:      "5678",
 				want:       http.StatusNotFound,
-				errorTitle: errorCategoryNotFound,
+				errorTitle: internal.ErrorCategoryNotFound,
 			},
 		}
 

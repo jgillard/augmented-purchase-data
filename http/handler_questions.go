@@ -29,7 +29,7 @@ func (c *Server) questionGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if reflect.DeepEqual(question, internal.Question{}) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorQuestionNotFound))
+		res.Write(craftErrorPayload(internal.ErrorQuestionNotFound))
 		return
 	}
 
@@ -62,7 +62,7 @@ func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 			if t.Field == "options" {
 				fmt.Println(`"options" object is wrong shape`)
 				res.WriteHeader(http.StatusBadRequest)
-				res.Write(craftErrorPayload(errorOptionsInvalid))
+				res.Write(craftErrorPayload(internal.ErrorOptionsInvalid))
 			}
 		default:
 			log.Fatal(err)
@@ -71,23 +71,23 @@ func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 	}
 
 	if !ensureJSONFieldsPresent(res, got, internal.QuestionPostRequest{}) {
-		res.Write(craftErrorPayload(errorFieldMissing))
+		res.Write(craftErrorPayload(internal.ErrorFieldMissing))
 		return
 	}
 
 	if !ensureStringFieldNonEmpty(res, "title", got.Title) {
-		res.Write(craftErrorPayload(errorTitleEmpty))
+		res.Write(craftErrorPayload(internal.ErrorTitleEmpty))
 		return
 	}
 
 	if !ensureStringFieldNonEmpty(res, "type", got.Type) {
-		res.Write(craftErrorPayload(errorTypeEmpty))
+		res.Write(craftErrorPayload(internal.ErrorTypeEmpty))
 		return
 	}
 
 	if !internal.IsValidOptionType(got.Type) {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write(craftErrorPayload(errorInvalidType))
+		res.Write(craftErrorPayload(internal.ErrorInvalidType))
 		return
 	}
 
@@ -95,13 +95,13 @@ func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 	if got.Options != nil {
 		for _, opt := range *got.Options {
 			if !ensureStringFieldNonEmpty(res, "options", opt) {
-				res.Write(craftErrorPayload(errorOptionEmpty))
+				res.Write(craftErrorPayload(internal.ErrorOptionEmpty))
 				return
 			}
 		}
 
 		if !ensureNoDuplicates(res, "options", *got.Options) {
-			res.Write(craftErrorPayload(errorDuplicateOption))
+			res.Write(craftErrorPayload(internal.ErrorDuplicateOption))
 			return
 		}
 	}
@@ -109,14 +109,14 @@ func (c *Server) questionPostHandler(res http.ResponseWriter, req *http.Request,
 	if c.questionStore.QuestionTitleExists(categoryID, got.Title) {
 		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(errorDuplicateTitle))
+		res.Write(craftErrorPayload(internal.ErrorDuplicateTitle))
 		return
 	}
 
 	if c.categoryStore != nil && !c.categoryStore.CategoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
@@ -150,42 +150,42 @@ func (c *Server) questionPatchHandler(res http.ResponseWriter, req *http.Request
 	questionTitle := got.Title
 
 	if !ensureJSONFieldsPresent(res, got, jsonTitle{}) {
-		res.Write(craftErrorPayload(errorFieldMissing))
+		res.Write(craftErrorPayload(internal.ErrorFieldMissing))
 		return
 	}
 
 	if !internal.IsValidQuestionTitle(questionTitle) {
 		fmt.Println(`"title" is not a valid string`)
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(errorInvalidTitle))
+		res.Write(craftErrorPayload(internal.ErrorInvalidTitle))
 		return
 	}
 
 	if c.categoryStore != nil && !c.categoryStore.CategoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
 	if !c.questionStore.QuestionIDExists(questionID) {
 		fmt.Println(`"questionID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorQuestionNotFound))
+		res.Write(craftErrorPayload(internal.ErrorQuestionNotFound))
 		return
 	}
 
 	if !c.questionStore.QuestionBelongsToCategory(questionID, categoryID) {
 		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorQuestionDoesntBelongToCategory))
+		res.Write(craftErrorPayload(internal.ErrorQuestionDoesntBelongToCategory))
 		return
 	}
 
 	if c.questionStore.QuestionTitleExists(categoryID, got.Title) {
 		fmt.Println(`"title" already exists`)
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(errorDuplicateTitle))
+		res.Write(craftErrorPayload(internal.ErrorDuplicateTitle))
 		return
 	}
 
@@ -203,21 +203,21 @@ func (c *Server) questionDeleteHandler(res http.ResponseWriter, req *http.Reques
 	if c.categoryStore != nil && !c.categoryStore.CategoryIDExists(categoryID) {
 		fmt.Println(`"categoryID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
 	if !c.questionStore.QuestionIDExists(questionID) {
 		fmt.Println(`"questionID" in path doesn't exist`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorQuestionNotFound))
+		res.Write(craftErrorPayload(internal.ErrorQuestionNotFound))
 		return
 	}
 
 	if !c.questionStore.QuestionBelongsToCategory(questionID, categoryID) {
 		fmt.Println(`"questionID" in path doesn't belong to "categoryID" in path`)
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorQuestionDoesntBelongToCategory))
+		res.Write(craftErrorPayload(internal.ErrorQuestionDoesntBelongToCategory))
 		return
 	}
 

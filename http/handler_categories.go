@@ -41,7 +41,7 @@ func (c *Server) categoryGetHandler(res http.ResponseWriter, req *http.Request, 
 
 	if reflect.DeepEqual(category, internal.Category{}) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
@@ -75,26 +75,26 @@ func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, CategoryPostRequest{}) {
-		res.Write(craftErrorPayload(errorFieldMissing))
+		res.Write(craftErrorPayload(internal.ErrorFieldMissing))
 		return
 	}
 
 	if c.categoryStore.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(errorDuplicateCategoryName))
+		res.Write(craftErrorPayload(internal.ErrorDuplicateCategoryName))
 		return
 	}
 
 	if !internal.IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(errorInvalidCategoryName))
+		res.Write(craftErrorPayload(internal.ErrorInvalidCategoryName))
 		return
 	}
 
 	// parentID not supplied
 	if got.ParentID == nil {
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write(craftErrorPayload(errorFieldMissing))
+		res.Write(craftErrorPayload(internal.ErrorFieldMissing))
 		return
 	}
 
@@ -102,7 +102,7 @@ func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 
 	if !c.categoryStore.CategoryIDExists(parentID) && parentID != "" {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(errorParentIDNotFound))
+		res.Write(craftErrorPayload(internal.ErrorParentIDNotFound))
 		return
 	}
 
@@ -110,7 +110,7 @@ func (c *Server) categoryPostHandler(res http.ResponseWriter, req *http.Request,
 	// we currently confine to 2 levels of categories
 	if c.categoryStore.GetCategoryDepth(parentID) == 1 {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(errorCategoryTooNested))
+		res.Write(craftErrorPayload(internal.ErrorCategoryTooNested))
 		return
 	}
 
@@ -143,25 +143,25 @@ func (c *Server) categoryPatchHandler(res http.ResponseWriter, req *http.Request
 	categoryName := got.Name
 
 	if !ensureJSONFieldsPresent(res, got, jsonName{}) {
-		res.Write(craftErrorPayload(errorFieldMissing))
+		res.Write(craftErrorPayload(internal.ErrorFieldMissing))
 		return
 	}
 
 	if !c.categoryStore.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
 	if c.categoryStore.CategoryNameExists(categoryName) {
 		res.WriteHeader(http.StatusConflict)
-		res.Write(craftErrorPayload(errorDuplicateCategoryName))
+		res.Write(craftErrorPayload(internal.ErrorDuplicateCategoryName))
 		return
 	}
 
 	if !internal.IsValidCategoryName(categoryName) {
 		res.WriteHeader(http.StatusUnprocessableEntity)
-		res.Write(craftErrorPayload(errorInvalidCategoryName))
+		res.Write(craftErrorPayload(internal.ErrorInvalidCategoryName))
 		return
 	}
 
@@ -178,7 +178,7 @@ func (c *Server) categoryDeleteHandler(res http.ResponseWriter, req *http.Reques
 
 	if !c.categoryStore.CategoryIDExists(categoryID) {
 		res.WriteHeader(http.StatusNotFound)
-		res.Write(craftErrorPayload(errorCategoryNotFound))
+		res.Write(craftErrorPayload(internal.ErrorCategoryNotFound))
 		return
 	}
 
