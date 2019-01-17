@@ -11,8 +11,11 @@ type InMemoryQuestionStore struct {
 }
 
 // NewInMemoryQuestionStore returns an initialised InMemoryQuestionStore pointer
-func NewInMemoryQuestionStore(q QuestionList) *InMemoryQuestionStore {
-	return &InMemoryQuestionStore{q}
+func NewInMemoryQuestionStore(q *QuestionList) *InMemoryQuestionStore {
+	if q == nil {
+		return &InMemoryQuestionStore{}
+	}
+	return &InMemoryQuestionStore{*q}
 }
 
 func (s *InMemoryQuestionStore) ListQuestions() QuestionList {

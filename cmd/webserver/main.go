@@ -17,8 +17,8 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	categoryStore := internal.NewInMemoryCategoryStore(internal.CategoryList{})
-	questionStore := internal.NewInMemoryQuestionStore(internal.QuestionList{})
+	categoryStore := internal.NewInMemoryCategoryStore(nil)
+	questionStore := internal.NewInMemoryQuestionStore(nil)
 
 	server := httptransport.NewServer(categoryStore, questionStore)
 

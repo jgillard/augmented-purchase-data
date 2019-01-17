@@ -3,7 +3,7 @@ package internal
 import "testing"
 
 func TestInMemoryQuestionStore(t *testing.T) {
-	got := NewInMemoryQuestionStore(QuestionList{})
+	got := NewInMemoryQuestionStore(nil)
 	want := &InMemoryQuestionStore{}
 	assertDeepEqual(t, got, want)
 }
@@ -14,7 +14,7 @@ func TestInMemoryQuestionStore_ListQuestions(t *testing.T) {
 			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(&questionList)
 
 	got := store.ListQuestions()
 	want := questionList
@@ -26,7 +26,7 @@ func TestInMemoryQuestionStore_ListQuestionsForCategory(t *testing.T) {
 			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(&questionList)
 
 	got := store.ListQuestionsForCategory("1234")
 	want := questionList
@@ -39,7 +39,7 @@ func TestInMemoryQuestionStore_GetQuestion(t *testing.T) {
 			Question{ID: "1", Title: "how many nights?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(&questionList)
 
 	got := store.GetQuestion("1")
 	want := questionList.Questions[0]
@@ -47,8 +47,7 @@ func TestInMemoryQuestionStore_GetQuestion(t *testing.T) {
 }
 
 func TestInMemoryQuestionStore_AddQuestion(t *testing.T) {
-	questionList := QuestionList{}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(nil)
 
 	categoryID := "1234"
 
@@ -116,7 +115,7 @@ func TestInMemoryQuestionStore_RenameQuestion(t *testing.T) {
 			question,
 		},
 	}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(&questionList)
 
 	newTitle := "foobar"
 
@@ -139,7 +138,7 @@ func TestInMemoryQuestionStore_DeleteQuestion(t *testing.T) {
 			question,
 		},
 	}
-	store := NewInMemoryQuestionStore(questionList)
+	store := NewInMemoryQuestionStore(&questionList)
 
 	store.DeleteQuestion("1")
 

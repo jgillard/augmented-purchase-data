@@ -9,8 +9,11 @@ type InMemoryCategoryStore struct {
 }
 
 // NewInMemoryCategoryStore returns an initialised InMemoryCategoryStore pointer
-func NewInMemoryCategoryStore(c CategoryList) *InMemoryCategoryStore {
-	return &InMemoryCategoryStore{c}
+func NewInMemoryCategoryStore(c *CategoryList) *InMemoryCategoryStore {
+	if c == nil {
+		return &InMemoryCategoryStore{}
+	}
+	return &InMemoryCategoryStore{*c}
 }
 
 func (s *InMemoryCategoryStore) ListCategories() CategoryList {

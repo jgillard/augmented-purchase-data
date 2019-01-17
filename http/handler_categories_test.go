@@ -20,7 +20,7 @@ func TestListCategories(t *testing.T) {
 			internal.Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := internal.NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(&categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("it returns a json category list", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestGetCategory(t *testing.T) {
 			internal.Category{ID: "ghijkm", Name: "apartment", ParentID: "1234"},
 		},
 	}
-	store := internal.NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(&categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("not-found failure reponse", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestAddCategory(t *testing.T) {
 			internal.Category{ID: "2345", Name: "existing subcategory name", ParentID: "1234"},
 		},
 	}
-	store := internal.NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(&categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -281,7 +281,7 @@ func TestRenameCategory(t *testing.T) {
 			internal.Category{ID: "1234", Name: "accommodation", ParentID: ""},
 		},
 	}
-	store := internal.NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(&categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -384,7 +384,7 @@ func TestRemoveCategory(t *testing.T) {
 			existingCategory,
 		},
 	}
-	store := internal.NewInMemoryCategoryStore(categoryList)
+	store := internal.NewInMemoryCategoryStore(&categoryList)
 	server := NewServer(store, nil)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {

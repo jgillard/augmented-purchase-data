@@ -3,7 +3,7 @@ package internal
 import "testing"
 
 func TestNewInMemoryCategoryStore(t *testing.T) {
-	got := NewInMemoryCategoryStore(CategoryList{})
+	got := NewInMemoryCategoryStore(nil)
 	want := &InMemoryCategoryStore{}
 	assertDeepEqual(t, got, want)
 }
@@ -14,7 +14,7 @@ func TestInMemoryCategoryStore_ListCategories(t *testing.T) {
 			Category{ID: "1234", Name: "accommodation"},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(&categoryList)
 
 	got := store.ListCategories()
 	want := categoryList
@@ -29,7 +29,7 @@ func TestInMemoryCategoryStore_GetChildCategories(t *testing.T) {
 			Category{ID: "1236", Name: "bar", ParentID: "1235"},
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(&categoryList)
 
 	t.Run("has children", func(t *testing.T) {
 		got := store.GetChildCategories("1234")
@@ -53,7 +53,7 @@ func TestInMemoryCategoryStore_GetCategory(t *testing.T) {
 			category,
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(&categoryList)
 
 	t.Run("ID doesn't exist", func(t *testing.T) {
 		got := store.GetCategory("abcd")
@@ -69,8 +69,7 @@ func TestInMemoryCategoryStore_GetCategory(t *testing.T) {
 }
 
 func TestInMemoryCategoryStore_AddCategory(t *testing.T) {
-	categoryList := CategoryList{}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(nil)
 
 	categoryName := "accomodation"
 	parentID := "1234"
@@ -96,7 +95,7 @@ func TestInMemoryCategoryStore_RenameCategory(t *testing.T) {
 			category,
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(&categoryList)
 
 	newName := "new name"
 
@@ -118,7 +117,7 @@ func TestInMemoryCategoryStore_DeleteCategory(t *testing.T) {
 			category,
 		},
 	}
-	store := NewInMemoryCategoryStore(categoryList)
+	store := NewInMemoryCategoryStore(&categoryList)
 
 	store.DeleteCategory("1234")
 

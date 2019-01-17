@@ -22,7 +22,7 @@ func TestListQuestionsForCategory(t *testing.T) {
 			}},
 		},
 	}
-	questionStore := internal.NewInMemoryQuestionStore(questionList)
+	questionStore := internal.NewInMemoryQuestionStore(&questionList)
 	server := NewServer(nil, questionStore)
 
 	t.Run("it returns a json question list for a category", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestGetQuestion(t *testing.T) {
 			}},
 		},
 	}
-	questionStore := internal.NewInMemoryQuestionStore(questionList)
+	questionStore := internal.NewInMemoryQuestionStore(&questionList)
 	server := NewServer(nil, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -156,8 +156,8 @@ func TestAddQuestion(t *testing.T) {
 				}},
 			},
 		}
-		categoryStore := internal.NewInMemoryCategoryStore(categoryList)
-		questionStore := internal.NewInMemoryQuestionStore(questionList)
+		categoryStore := internal.NewInMemoryCategoryStore(&categoryList)
+		questionStore := internal.NewInMemoryQuestionStore(&questionList)
 		server := NewServer(categoryStore, questionStore)
 
 		cases := map[string]struct {
@@ -247,10 +247,7 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:number question", func(t *testing.T) {
-		questionList := internal.QuestionList{
-			Questions: []internal.Question{},
-		}
-		questionStore := internal.NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(nil)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -297,10 +294,7 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:string question without options", func(t *testing.T) {
-		questionList := internal.QuestionList{
-			Questions: []internal.Question{},
-		}
-		questionStore := internal.NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(nil)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -347,10 +341,7 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:string question with empty options", func(t *testing.T) {
-		questionList := internal.QuestionList{
-			Questions: []internal.Question{},
-		}
-		questionStore := internal.NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(nil)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -399,10 +390,7 @@ func TestAddQuestion(t *testing.T) {
 	})
 
 	t.Run("add type:string question with options", func(t *testing.T) {
-		questionList := internal.QuestionList{
-			Questions: []internal.Question{},
-		}
-		questionStore := internal.NewInMemoryQuestionStore(questionList)
+		questionStore := internal.NewInMemoryQuestionStore(nil)
 		server := NewServer(nil, questionStore)
 
 		categoryID := "1"
@@ -473,8 +461,8 @@ func TestRenameQuestion(t *testing.T) {
 			internal.Question{ID: "3", Title: "how much nougat?", CategoryID: "2345", Type: "number"},
 		},
 	}
-	categoryStore := internal.NewInMemoryCategoryStore(categoryList)
-	questionStore := internal.NewInMemoryQuestionStore(questionList)
+	categoryStore := internal.NewInMemoryCategoryStore(&categoryList)
+	questionStore := internal.NewInMemoryQuestionStore(&questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
@@ -597,8 +585,8 @@ func TestRemoveQuestion(t *testing.T) {
 			internal.Question{ID: "1", Title: "how many nuggets?", CategoryID: "1234", Type: "number"},
 		},
 	}
-	categoryStore := internal.NewInMemoryCategoryStore(categoryList)
-	questionStore := internal.NewInMemoryQuestionStore(questionList)
+	categoryStore := internal.NewInMemoryCategoryStore(&categoryList)
+	questionStore := internal.NewInMemoryQuestionStore(&questionList)
 	server := NewServer(categoryStore, questionStore)
 
 	t.Run("test failure responses & effect", func(t *testing.T) {
