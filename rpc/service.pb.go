@@ -3,12 +3,13 @@
 
 package rpctransport
 
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+
 import (
-	context "context"
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
+	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type EmptyRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -32,17 +33,16 @@ func (m *EmptyRequest) Reset()         { *m = EmptyRequest{} }
 func (m *EmptyRequest) String() string { return proto.CompactTextString(m) }
 func (*EmptyRequest) ProtoMessage()    {}
 func (*EmptyRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{0}
+	return fileDescriptor_service_161c430caf05d3d4, []int{0}
 }
-
 func (m *EmptyRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EmptyRequest.Unmarshal(m, b)
 }
 func (m *EmptyRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EmptyRequest.Marshal(b, m, deterministic)
 }
-func (m *EmptyRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EmptyRequest.Merge(m, src)
+func (dst *EmptyRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EmptyRequest.Merge(dst, src)
 }
 func (m *EmptyRequest) XXX_Size() int {
 	return xxx_messageInfo_EmptyRequest.Size(m)
@@ -64,17 +64,16 @@ func (m *StatusReply) Reset()         { *m = StatusReply{} }
 func (m *StatusReply) String() string { return proto.CompactTextString(m) }
 func (*StatusReply) ProtoMessage()    {}
 func (*StatusReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{1}
+	return fileDescriptor_service_161c430caf05d3d4, []int{1}
 }
-
 func (m *StatusReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StatusReply.Unmarshal(m, b)
 }
 func (m *StatusReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_StatusReply.Marshal(b, m, deterministic)
 }
-func (m *StatusReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatusReply.Merge(m, src)
+func (dst *StatusReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatusReply.Merge(dst, src)
 }
 func (m *StatusReply) XXX_Size() int {
 	return xxx_messageInfo_StatusReply.Size(m)
@@ -103,17 +102,16 @@ func (m *GetCategoryRequest) Reset()         { *m = GetCategoryRequest{} }
 func (m *GetCategoryRequest) String() string { return proto.CompactTextString(m) }
 func (*GetCategoryRequest) ProtoMessage()    {}
 func (*GetCategoryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{2}
+	return fileDescriptor_service_161c430caf05d3d4, []int{2}
 }
-
 func (m *GetCategoryRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetCategoryRequest.Unmarshal(m, b)
 }
 func (m *GetCategoryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GetCategoryRequest.Marshal(b, m, deterministic)
 }
-func (m *GetCategoryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetCategoryRequest.Merge(m, src)
+func (dst *GetCategoryRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetCategoryRequest.Merge(dst, src)
 }
 func (m *GetCategoryRequest) XXX_Size() int {
 	return xxx_messageInfo_GetCategoryRequest.Size(m)
@@ -144,17 +142,16 @@ func (m *GetCategoryReply) Reset()         { *m = GetCategoryReply{} }
 func (m *GetCategoryReply) String() string { return proto.CompactTextString(m) }
 func (*GetCategoryReply) ProtoMessage()    {}
 func (*GetCategoryReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{3}
+	return fileDescriptor_service_161c430caf05d3d4, []int{3}
 }
-
 func (m *GetCategoryReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GetCategoryReply.Unmarshal(m, b)
 }
 func (m *GetCategoryReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GetCategoryReply.Marshal(b, m, deterministic)
 }
-func (m *GetCategoryReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetCategoryReply.Merge(m, src)
+func (dst *GetCategoryReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetCategoryReply.Merge(dst, src)
 }
 func (m *GetCategoryReply) XXX_Size() int {
 	return xxx_messageInfo_GetCategoryReply.Size(m)
@@ -186,33 +183,50 @@ func (m *GetCategoryReply) GetParentID() string {
 	return ""
 }
 
+type ListCategoryReply struct {
+	Categories           []*GetCategoryReply `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *ListCategoryReply) Reset()         { *m = ListCategoryReply{} }
+func (m *ListCategoryReply) String() string { return proto.CompactTextString(m) }
+func (*ListCategoryReply) ProtoMessage()    {}
+func (*ListCategoryReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_service_161c430caf05d3d4, []int{4}
+}
+func (m *ListCategoryReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListCategoryReply.Unmarshal(m, b)
+}
+func (m *ListCategoryReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListCategoryReply.Marshal(b, m, deterministic)
+}
+func (dst *ListCategoryReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListCategoryReply.Merge(dst, src)
+}
+func (m *ListCategoryReply) XXX_Size() int {
+	return xxx_messageInfo_ListCategoryReply.Size(m)
+}
+func (m *ListCategoryReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListCategoryReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ListCategoryReply proto.InternalMessageInfo
+
+func (m *ListCategoryReply) GetCategories() []*GetCategoryReply {
+	if m != nil {
+		return m.Categories
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*EmptyRequest)(nil), "rpctransport.EmptyRequest")
 	proto.RegisterType((*StatusReply)(nil), "rpctransport.StatusReply")
 	proto.RegisterType((*GetCategoryRequest)(nil), "rpctransport.GetCategoryRequest")
 	proto.RegisterType((*GetCategoryReply)(nil), "rpctransport.GetCategoryReply")
-}
-
-func init() { proto.RegisterFile("service.proto", fileDescriptor_a0b84a42fa06f626) }
-
-var fileDescriptor_a0b84a42fa06f626 = []byte{
-	// 243 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xc1, 0x4a, 0xc3, 0x40,
-	0x10, 0x86, 0x4d, 0x94, 0x62, 0xa7, 0xb5, 0xca, 0x1c, 0x24, 0xe6, 0x50, 0xca, 0x82, 0xe0, 0x29,
-	0x07, 0xf5, 0x0d, 0x8c, 0x84, 0xdc, 0x34, 0xfa, 0x02, 0xeb, 0x76, 0x28, 0x01, 0x9b, 0x5d, 0x67,
-	0xa7, 0x42, 0x5f, 0xc9, 0xa7, 0x14, 0xd7, 0x18, 0x36, 0x08, 0xbd, 0xed, 0xff, 0xef, 0xff, 0xef,
-	0xce, 0xc7, 0xc0, 0x99, 0x27, 0xfe, 0x6c, 0x0d, 0x15, 0x8e, 0xad, 0x58, 0x9c, 0xb3, 0x33, 0xc2,
-	0xba, 0xf3, 0xce, 0xb2, 0xa8, 0x05, 0xcc, 0x1f, 0xb7, 0x4e, 0xf6, 0x0d, 0x7d, 0xec, 0xc8, 0x8b,
-	0xba, 0x86, 0xd9, 0x8b, 0x68, 0xd9, 0xf9, 0x86, 0xdc, 0xfb, 0x1e, 0x2f, 0x61, 0xe2, 0x83, 0xcc,
-	0x92, 0x55, 0x72, 0x33, 0x6d, 0x7a, 0xa5, 0xee, 0x01, 0x2b, 0x92, 0x07, 0x2d, 0xb4, 0xb1, 0xfc,
-	0x57, 0xc6, 0x25, 0x80, 0xe9, 0xad, 0xba, 0xec, 0x1b, 0x91, 0xa3, 0x1a, 0xb8, 0x18, 0xb5, 0x7e,
-	0x7e, 0x58, 0x40, 0x3a, 0x64, 0xd3, 0xba, 0x44, 0x84, 0x93, 0x4e, 0x6f, 0x29, 0x4b, 0x83, 0x13,
-	0xce, 0x98, 0xc3, 0xa9, 0xd3, 0x4c, 0x9d, 0xd4, 0x65, 0x76, 0x1c, 0xfc, 0x41, 0xdf, 0x7e, 0x25,
-	0x70, 0xfe, 0xc4, 0xda, 0x48, 0x6b, 0xda, 0x6e, 0x53, 0xd9, 0xd7, 0xf5, 0x1a, 0x4b, 0x98, 0x56,
-	0x24, 0xbf, 0x1c, 0x98, 0x17, 0x31, 0x70, 0x11, 0xd3, 0xe6, 0x57, 0xe3, 0xbb, 0x88, 0x5c, 0x1d,
-	0xe1, 0x33, 0xcc, 0xa2, 0x69, 0x71, 0x35, 0xce, 0xfe, 0xc7, 0xcf, 0x97, 0x07, 0x12, 0xe1, 0xc9,
-	0xb7, 0x49, 0x58, 0xc1, 0xdd, 0x77, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf2, 0x42, 0x0e, 0x3f, 0x93,
-	0x01, 0x00, 0x00,
+	proto.RegisterType((*ListCategoryReply)(nil), "rpctransport.ListCategoryReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -228,6 +242,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PracticingGoTddClient interface {
 	GetStatus(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*StatusReply, error)
+	ListCategories(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*ListCategoryReply, error)
 	GetCategory(ctx context.Context, in *GetCategoryRequest, opts ...grpc.CallOption) (*GetCategoryReply, error)
 }
 
@@ -248,6 +263,15 @@ func (c *practicingGoTddClient) GetStatus(ctx context.Context, in *EmptyRequest,
 	return out, nil
 }
 
+func (c *practicingGoTddClient) ListCategories(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*ListCategoryReply, error) {
+	out := new(ListCategoryReply)
+	err := c.cc.Invoke(ctx, "/rpctransport.PracticingGoTdd/ListCategories", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *practicingGoTddClient) GetCategory(ctx context.Context, in *GetCategoryRequest, opts ...grpc.CallOption) (*GetCategoryReply, error) {
 	out := new(GetCategoryReply)
 	err := c.cc.Invoke(ctx, "/rpctransport.PracticingGoTdd/GetCategory", in, out, opts...)
@@ -260,6 +284,7 @@ func (c *practicingGoTddClient) GetCategory(ctx context.Context, in *GetCategory
 // PracticingGoTddServer is the server API for PracticingGoTdd service.
 type PracticingGoTddServer interface {
 	GetStatus(context.Context, *EmptyRequest) (*StatusReply, error)
+	ListCategories(context.Context, *EmptyRequest) (*ListCategoryReply, error)
 	GetCategory(context.Context, *GetCategoryRequest) (*GetCategoryReply, error)
 }
 
@@ -281,6 +306,24 @@ func _PracticingGoTdd_GetStatus_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PracticingGoTddServer).GetStatus(ctx, req.(*EmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PracticingGoTdd_ListCategories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PracticingGoTddServer).ListCategories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpctransport.PracticingGoTdd/ListCategories",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PracticingGoTddServer).ListCategories(ctx, req.(*EmptyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,10 +355,38 @@ var _PracticingGoTdd_serviceDesc = grpc.ServiceDesc{
 			Handler:    _PracticingGoTdd_GetStatus_Handler,
 		},
 		{
+			MethodName: "ListCategories",
+			Handler:    _PracticingGoTdd_ListCategories_Handler,
+		},
+		{
 			MethodName: "GetCategory",
 			Handler:    _PracticingGoTdd_GetCategory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "service.proto",
+}
+
+func init() { proto.RegisterFile("service.proto", fileDescriptor_service_161c430caf05d3d4) }
+
+var fileDescriptor_service_161c430caf05d3d4 = []byte{
+	// 285 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x52, 0x41, 0x4b, 0xf3, 0x40,
+	0x10, 0x6d, 0xd3, 0x8f, 0xf2, 0x75, 0x52, 0xa3, 0xce, 0x41, 0x62, 0x0e, 0xb5, 0x2c, 0x08, 0x3d,
+	0xe5, 0x50, 0x3d, 0x7b, 0x31, 0x12, 0x02, 0x82, 0x9a, 0xfa, 0x07, 0xd6, 0x74, 0x28, 0x0b, 0x36,
+	0x59, 0x77, 0xa7, 0x42, 0x7f, 0xbb, 0x17, 0x69, 0x1a, 0xc3, 0xa6, 0x42, 0xbd, 0xed, 0xbc, 0xd9,
+	0xf7, 0xf6, 0xbd, 0xc7, 0xc2, 0x89, 0x25, 0xf3, 0xa9, 0x0a, 0x8a, 0xb5, 0xa9, 0xb8, 0xc2, 0xb1,
+	0xd1, 0x05, 0x1b, 0x59, 0x5a, 0x5d, 0x19, 0x16, 0x01, 0x8c, 0x1f, 0xd6, 0x9a, 0xb7, 0x39, 0x7d,
+	0x6c, 0xc8, 0xb2, 0xb8, 0x06, 0x7f, 0xc1, 0x92, 0x37, 0x36, 0x27, 0xfd, 0xbe, 0xc5, 0x0b, 0x18,
+	0xda, 0x7a, 0x0c, 0xfb, 0xd3, 0xfe, 0x6c, 0x94, 0x37, 0x93, 0xb8, 0x05, 0x4c, 0x89, 0xef, 0x25,
+	0xd3, 0xaa, 0x32, 0x3f, 0x64, 0x9c, 0x00, 0x14, 0x0d, 0x94, 0x25, 0x0d, 0xc3, 0x41, 0x44, 0x0e,
+	0x67, 0x1d, 0xd6, 0xee, 0x85, 0x00, 0xbc, 0xf6, 0xae, 0x97, 0x25, 0x88, 0xf0, 0xaf, 0x94, 0x6b,
+	0x0a, 0xbd, 0x1a, 0xa9, 0xcf, 0x18, 0xc1, 0x7f, 0x2d, 0x0d, 0x95, 0x9c, 0x25, 0xe1, 0xa0, 0xc6,
+	0xdb, 0x59, 0x2c, 0xe0, 0xfc, 0x51, 0xd9, 0x03, 0xd1, 0xbb, 0xd6, 0x88, 0xa2, 0x9d, 0xf5, 0xc1,
+	0xcc, 0x9f, 0x4f, 0x62, 0x37, 0x78, 0x7c, 0x68, 0x24, 0x77, 0x18, 0xf3, 0xaf, 0x3e, 0x9c, 0x3e,
+	0x1b, 0x59, 0xb0, 0x2a, 0x54, 0xb9, 0x4a, 0xab, 0xd7, 0xe5, 0x12, 0x13, 0x18, 0xa5, 0xc4, 0xfb,
+	0x72, 0x30, 0xea, 0x8a, 0xb9, 0x15, 0x46, 0x97, 0xdd, 0x9d, 0x53, 0xa7, 0xe8, 0xe1, 0x13, 0x04,
+	0x8e, 0x5d, 0x45, 0xc7, 0xa5, 0xae, 0xba, 0xbb, 0x5f, 0x41, 0x45, 0x0f, 0x5f, 0xc0, 0x77, 0xa2,
+	0xe0, 0xf4, 0x48, 0xca, 0xbd, 0xe6, 0x1f, 0x3d, 0x88, 0xde, 0xdb, 0xb0, 0xfe, 0x28, 0x37, 0xdf,
+	0x01, 0x00, 0x00, 0xff, 0xff, 0xea, 0x0b, 0xd5, 0x37, 0x39, 0x02, 0x00, 0x00,
 }

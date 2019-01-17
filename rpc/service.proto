@@ -18,7 +18,12 @@ message GetCategoryReply {
   string parentID = 3;
 }
 
+message ListCategoryReply {
+  repeated GetCategoryReply categories = 1;
+}
+
 service PracticingGoTdd {
   rpc GetStatus(EmptyRequest) returns (StatusReply) {}
+  rpc ListCategories(EmptyRequest) returns (ListCategoryReply) {}
   rpc GetCategory(GetCategoryRequest) returns (GetCategoryReply) {}
 }

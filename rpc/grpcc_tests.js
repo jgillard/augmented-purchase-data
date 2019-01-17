@@ -8,6 +8,11 @@ client.getStatus({}, function(err, data) {
     }
 });
 
+client.ListCategories({}, function(err, data) {
+    console.log("Ran ListCategories({})")
+    console.log("", data);
+});
+
 client.GetCategory({ categoryID: "1" }, function(err, data) {
     console.log("Ran GetCategory({categoryID:'1'})")
     console.log("", data);

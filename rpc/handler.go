@@ -26,6 +26,24 @@ func (s *Server) GetStatus(ctx context.Context, req *EmptyRequest) (*StatusReply
 	return reply, nil
 }
 
+func (s *Server) ListCategories(ctx context.Context, req *EmptyRequest) (*ListCategoryReply, error) {
+	categoryList := s.categoryStore.ListCategories()
+
+	categoryReplies := []*GetCategoryReply{}
+
+	for _, category := range categoryList.Categories {
+		categoryReplies = append(categoryReplies,
+			&GetCategoryReply{
+				ID: category.ID, Name: category.Name, ParentID: category.ParentID,
+			},
+		)
+	}
+
+	reply := &ListCategoryReply{Categories: categoryReplies}
+
+	return reply, nil
+}
+
 func (s *Server) GetCategory(ctx context.Context, req *GetCategoryRequest) (*GetCategoryReply, error) {
 	category := s.categoryStore.GetCategory(req.CategoryID)
 	reply := &GetCategoryReply{

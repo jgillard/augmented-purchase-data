@@ -23,8 +23,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	categoryStore := internal.NewInMemoryCategoryStore(internal.CategoryList{})
-	questionStore := internal.NewInMemoryQuestionStore(internal.QuestionList{})
+	categoryStore := internal.NewInMemoryCategoryStore(nil)
+	questionStore := internal.NewInMemoryQuestionStore(nil)
 
 	s := api.NewServer(categoryStore, questionStore)
 	grpcServer := grpc.NewServer()
